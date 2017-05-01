@@ -5,6 +5,7 @@
 /// adapted by Bastien Chatelain and Aurelien Bloch 
 /// For Virtual reality project
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+//Debug variable for this class. Can be set in the unity window
 var pro_bike_debug : boolean = false;   
 
 
@@ -112,11 +113,16 @@ function OnGUI ()
 			GUI.color = Color.red;
 			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
 		}
+	}else if (outsideControls.cameraMode == controlHub.CameraMode.FIRST_PERSON){
+
+
 	}
+
     // user info help box lines
 	if(outsideControls.help){
 		GUI.color = Color.white;
 		GUI.Box (Rect (10,10,180,20), "A,W,S,D or arrows - main control", smallerText);
+		// TODO Add more ?
 		GUI.color = Color.black; 
 	}
 }
@@ -129,6 +135,8 @@ function Start () {
 	//to connect c# mobile control script to this one
 	outsideControls = ctrlHub.GetComponent(controlHub);
 
+	//Not used for now ! Will be use to set the limit horizontal angle of the bike
+	// TODO set the value and use it. 
 	maxHorizontalAngle = 40.0f;  
 
 	//this string is necessary for Unity 5.3 with new PhysX feature when Tensor decoupled from center of mass
@@ -139,7 +147,7 @@ function Start () {
 	//this string is necessary for Unity 5.3 with new PhysX feature when Tensor decoupled from center of mass
 	GetComponent.<Rigidbody>().inertiaTensor = setInitialTensor;
 	
-	// wheel colors for understanding of accelerate, idle, brake(white is idle status)
+	// wheel colors for understanding of accelerate, idle, brake(black is idle status)
 	meshFrontWheel.GetComponent.<Renderer>().material.color = Color.black;
 	meshRearWheel.GetComponent.<Renderer>().material.color = Color.black;
 	
@@ -149,9 +157,10 @@ function Start () {
 	// too keep EngineTorque variable like "real" horse powers
 	EngineTorque = EngineTorque * 20;
 	
-	//*30 is for good braking to keep frontBrakePower = 100 for good brakes. So, 100 is like sportsbike's Brembo
-	frontBrakePower = frontBrakePower * 30;//30 is abstract but necessary for Unity5
-	
+	//*30 is for good braking to keep frontBrakePower = 100 for good brakes.
+	//30 is abstract but necessary for Unity5
+	frontBrakePower = frontBrakePower * 30;
+
 	//tehcnical variables
 	normalRearSuspSpring = coll_rearWheel.suspensionSpring.spring;
 	normalFrontSuspSpring = coll_frontWheel.suspensionSpring.spring;
@@ -160,7 +169,7 @@ function Start () {
 
 function FixedUpdate (){
 	
-	// if RPM is more than engine can hold we should shift gear up
+	// if RPM is more than engine can hold we should shift gear up or down
 	EngineRPM = coll_rearWheel.rpm * GearRatio[CurrentGear];
 	if (EngineRPM > EngineRedline){
 		EngineRPM = MaxEngineRPM;
@@ -171,17 +180,19 @@ function FixedUpdate (){
 	ApplyLocalPositionToVisuals(coll_rearWheel);
  	
  	
- 	/////////// part where rear pendulum, wheelbar and wheels meshes matched to wheelsColliers and so on
+ 	//////////////////////// Do meshes matched to Coliders ////////////////////////////////////////////
  	//beauty - rear pendulumn is looking at rear wheel
  	rearPendulumn.transform.localRotation.eulerAngles.x = 0-8+(meshRearWheel.transform.localPosition.y*100);
  	//beauty - wheel bar rotating by front wheel
 	suspensionFront_down.transform.localPosition.y =(meshFrontWheel.transform.localPosition.y - 0.15);
 	meshFrontWheel.transform.localPosition.z = meshFrontWheel.transform.localPosition.z - (suspensionFront_down.transform.localPosition.y + 0.4)/5;
 
+	//Color Debug
 	if(pro_bike_debug){
 		meshFrontWheel.GetComponent.<Renderer>().material.color = Color.black;
 		meshRearWheel.GetComponent.<Renderer>().material.color = Color.black;
 	}
+
 
 	// drag and angular drag for emulate air resistance
 	GetComponent.<Rigidbody>().drag = GetComponent.<Rigidbody>().velocity.magnitude / 210; // when 250 bike can easy beat 200km/h // ~55 m/s
@@ -225,6 +236,8 @@ function FixedUpdate (){
 		GetComponent.<Rigidbody>().centerOfMass = Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
 	}
 
+
+
 	RearSuspensionRestoration();
 		
 		
@@ -244,9 +257,9 @@ function FixedUpdate (){
 				meshFrontWheel.GetComponent.<Renderer>().material.color = Color.red;
 			}
 		}
-		//Rear part  
+		//Rear part which is not so good as front brake
 		{
-			coll_rearWheel.brakeTorque = frontBrakePower / 2;// rear brake is not so good as front brake
+			coll_rearWheel.brakeTorque = frontBrakePower / 2;
 			
 			if (this.transform.localEulerAngles.x > 180 && this.transform.localEulerAngles.x < 350){
 				CoM.localPosition.z = 0.0 + tmpMassShift;
@@ -265,7 +278,7 @@ function FixedUpdate (){
 
 		// Front part reset
 		{
-			FrontSuspensionRestoration();//here is function for weak front spring and return it's force slowly
+			FrontSuspensionRestoration();
 		}
 		
 		//Rear part reset 
@@ -282,7 +295,7 @@ function FixedUpdate (){
 	}	
 
 		
-	//////////////////////////////////// reverse /////////////////////////////////////////////////////////	
+	//////////////////////////////////// REVERSE /////////////////////////////////////////////////////////	
 	if (outsideControls.reverse && bikeSpeed <=0 && !isReverseOn){
 		isReverseOn = true;
 	}
@@ -291,14 +304,13 @@ function FixedUpdate (){
 		isReverseOn = false;
 	}
 
-	//////////////////////////////////// turnning ///////////////////////////////////////////////////////			
-	// there is MOST trick in the code
+	//////////////////////////////////// TURNING ///////////////////////////////////////////////////////			
 	// the Unity physics isn't like real life. Wheel collider isn't round as real bike tyre.
 	// so, face it - you can't reach accurate and physics correct countersteering effect on wheelCollider
 	// For that and many other reasons we restrict front wheel turn angle when when speed is growing
-	//(honestly, there was a time when MotoGP bikes has restricted wheel bar rotation angle by 1.5 degree ! as we got here :)			
-	tempMaxWheelAngle = wheelbarRestrictCurve.Evaluate(bikeSpeed);//associate speed with curve which you've tuned in Editor
-	
+
+	//associate speed with curve which you've tuned in Editor
+	tempMaxWheelAngle = wheelbarRestrictCurve.Evaluate(bikeSpeed);
 	if (outsideControls.Horizontal !=0){		
 		coll_frontWheel.steerAngle = tempMaxWheelAngle * outsideControls.Horizontal;
 		steeringWheel.rotation = coll_frontWheel.transform.rotation * Quaternion.Euler (0, coll_frontWheel.steerAngle, coll_frontWheel.transform.rotation.z);
@@ -312,10 +324,7 @@ function FixedUpdate (){
 	////////////////////////////////// RESTART KEY ////////////////////////////////////////////////////////
 	// Restart key - recreate bike few meters above current place
 	if (outsideControls.restartBike){
-		if (outsideControls.fullRestartBike){
-			transform.position = Vector3(0,1,-11);
-			transform.rotation=Quaternion.Euler( 0.0, 0.0, 0.0 );
-		}
+		
 		transform.position+=Vector3(0,0.1,0);
 		transform.rotation=Quaternion.Euler( 0.0, transform.localEulerAngles.y, 0.0 );
 		GetComponent.<Rigidbody>().velocity=Vector3.zero;
@@ -323,7 +332,7 @@ function FixedUpdate (){
 		CoM.localPosition.x = 0.0;
 		CoM.localPosition.y = normalCoM;
 		CoM.localPosition.z = 0.0;
-		//for fix bug when front wheel IN ground after restart(sorry, I really don't understand why it happens);
+
 		coll_frontWheel.motorTorque = 0;
 		coll_frontWheel.brakeTorque = 0;
 		coll_rearWheel.motorTorque = 0;
@@ -332,35 +341,32 @@ function FixedUpdate (){
 	}		
 }
 
-//function Update () {
-	//not use that because everything here is about physics
-//}
+
 ///////////////////////////////////////////// FUNCTIONS /////////////////////////////////////////////////////////
 function ShiftGears() {
-	if ( EngineRPM >= MaxEngineRPM ) {
-		var AppropriateGear : int = CurrentGear;
+
+	var AppropriateGear : int = CurrentGear;
 		
-		for ( var i = 0; i < GearRatio.length; i ++ ) {
+	if ( EngineRPM >= MaxEngineRPM ) {
+		
+		for ( var i = 0; i < GearRatio.length; i++ ) {
 			if (coll_rearWheel.rpm * GearRatio[i] < MaxEngineRPM ) {
 				AppropriateGear = i;
 				break;
 			}
 		}
-		
-		CurrentGear = AppropriateGear;
 	}
 	
 	if ( EngineRPM <= MinEngineRPM ) {
-		AppropriateGear = CurrentGear;
 		
-		for ( var j = GearRatio.length-1; j >= 0; j -- ) {
-			if (coll_rearWheel.rpm * GearRatio[j] > MinEngineRPM ) {
-				AppropriateGear = j;
+		for ( var i = GearRatio.length-1; i >= 0; i-- ) {
+			if (coll_rearWheel.rpm * GearRatio[i] > MinEngineRPM ) {
+				AppropriateGear = i;
 				break;
 			}
 		}
-		CurrentGear = AppropriateGear;
 	}
+	CurrentGear = AppropriateGear;
 }
 	
 function ApplyLocalPositionToVisuals (collider : WheelCollider) {
@@ -385,6 +391,7 @@ function ApplyLocalPositionToVisuals (collider : WheelCollider) {
 		visualWheel.Rotate (collider.rpm / 60 * 360 * Time.deltaTime, 0, 0);
 
 }
+
 //need to restore spring power for rear suspension after make it harder for wheelie
 function RearSuspensionRestoration (){
 	if (coll_rearWheel.suspensionSpring.spring > normalRearSuspSpring){
@@ -393,7 +400,7 @@ function RearSuspensionRestoration (){
 }
 //need to restore spring power for front suspension after make it weaker for stoppie
 function FrontSuspensionRestoration (){
-	if (coll_frontWheel.suspensionSpring.spring < normalFrontSuspSpring){//slowly returning force to front spring
+	if (coll_frontWheel.suspensionSpring.spring < normalFrontSuspSpring){
 		coll_frontWheel.suspensionSpring.spring = coll_frontWheel.suspensionSpring.spring += 500;
 	}
 }
