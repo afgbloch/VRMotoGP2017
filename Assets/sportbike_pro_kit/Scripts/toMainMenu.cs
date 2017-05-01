@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class toMainMenu : MonoBehaviour {
 
@@ -11,7 +12,7 @@ public class toMainMenu : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if  (Input.GetKeyDown(KeyCode.Escape)){
-			Application.LoadLevel("u5bike_MainMenu");
-		}
+            SceneManager.LoadScene("VRMotoGP2017_MainMenu");
+        }
 	}
 }

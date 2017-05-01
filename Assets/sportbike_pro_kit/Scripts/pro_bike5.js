@@ -142,7 +142,8 @@ function Start () {
 
 	//this string is necessary for Unity 5.3 with new PhysX feature when Tensor decoupled from center of mass
 	var setInitialTensor : Vector3 = GetComponent.<Rigidbody>().inertiaTensor; 
-	
+
+
 	// now Center of Mass(CoM) is alligned to GameObject "CoM"
 	GetComponent.<Rigidbody>().centerOfMass = Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z); 
 	//this string is necessary for Unity 5.3 with new PhysX feature when Tensor decoupled from center of mass
@@ -164,7 +165,9 @@ function Start () {
 
 	//tehcnical variables
 	normalRearSuspSpring = coll_rearWheel.suspensionSpring.spring;
-	normalFrontSuspSpring = coll_frontWheel.suspensionSpring.spring;
+	normalFrontSuspSpring = coll_frontWheel.suspensionSpring.spring; 
+
+	outsideControls.restartBike = true; 
 }
 
 
@@ -196,6 +199,7 @@ function FixedUpdate (){
 
 
 	// drag and angular drag for emulate air resistance
+	//Debug.Log(GetComponent.<Rigidbody>().velocity.magnitude/210 * airResistance );
 	GetComponent.<Rigidbody>().drag = GetComponent.<Rigidbody>().velocity.magnitude / 210 * airResistance; // when 250 bike can easy beat 200km/h // ~55 m/s
 	GetComponent.<Rigidbody>().angularDrag = 7 + GetComponent.<Rigidbody>().velocity.magnitude/20;
 	
@@ -219,6 +223,7 @@ function FixedUpdate (){
 		CoM.localPosition.z = 0.0 + tmpMassShift;
 		CoM.localPosition.y = normalCoM;
 		GetComponent.<Rigidbody>().centerOfMass = Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+	
 	}
 		
 	//reverse case
@@ -230,6 +235,7 @@ function FixedUpdate (){
 		if(pro_bike_debug){
 			meshRearWheel.GetComponent.<Renderer>().material.color = Color.white;
 		}
+
 
 		// when normal accelerating CoM z is averaged
 		CoM.localPosition.z = 0.0 + tmpMassShift;

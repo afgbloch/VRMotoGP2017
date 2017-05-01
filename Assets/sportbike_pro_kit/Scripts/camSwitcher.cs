@@ -69,7 +69,6 @@ public class camSwitcher : MonoBehaviour
             // Change of camera mode if not already done
             if (thirdPersonCamera.enabled)
             {
-                Debug.Log("YOLOY");
                 thirdPersonCamera.enabled = false;
                 firstPersonCamera.enabled = true;
                 thirdPersonCamera.gameObject.SetActive(false);
