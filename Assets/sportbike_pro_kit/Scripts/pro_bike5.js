@@ -31,7 +31,7 @@ var normalCoM : float;
 
 //maximum the bike can be inclined Horizontaly
 var maxHorizontalAngle : float; 
-
+var airResistance : float ; 
 
 ////////////////// "beauties" of visuals - some meshes for display visual parts of bike ////////////
 //rear pendulumn
@@ -138,6 +138,7 @@ function Start () {
 	//Not used for now ! Will be use to set the limit horizontal angle of the bike
 	// TODO set the value and use it. 
 	maxHorizontalAngle = 40.0f;  
+	airResistance = 2.0f; 
 
 	//this string is necessary for Unity 5.3 with new PhysX feature when Tensor decoupled from center of mass
 	var setInitialTensor : Vector3 = GetComponent.<Rigidbody>().inertiaTensor; 
@@ -195,7 +196,7 @@ function FixedUpdate (){
 
 
 	// drag and angular drag for emulate air resistance
-	GetComponent.<Rigidbody>().drag = GetComponent.<Rigidbody>().velocity.magnitude / 210; // when 250 bike can easy beat 200km/h // ~55 m/s
+	GetComponent.<Rigidbody>().drag = GetComponent.<Rigidbody>().velocity.magnitude / 210 * airResistance; // when 250 bike can easy beat 200km/h // ~55 m/s
 	GetComponent.<Rigidbody>().angularDrag = 7 + GetComponent.<Rigidbody>().velocity.magnitude/20;
 	
 
@@ -359,9 +360,9 @@ function ShiftGears() {
 	
 	if ( EngineRPM <= MinEngineRPM ) {
 		
-		for ( var i = GearRatio.length-1; i >= 0; i-- ) {
+		for ( var j = GearRatio.length-1; j >= 0; j-- ) {
 			if (coll_rearWheel.rpm * GearRatio[i] > MinEngineRPM ) {
-				AppropriateGear = i;
+				AppropriateGear = j;
 				break;
 			}
 		}
