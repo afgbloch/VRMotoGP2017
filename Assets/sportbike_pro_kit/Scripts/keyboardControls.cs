@@ -13,7 +13,7 @@ public class keyboardControls : MonoBehaviour {
 		ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
 		outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
 
-        outsideControls.cameraMode = controlHub.CameraMode.THIRD_PERSON;
+        outsideControls.cameraMode = controlHub.CameraMode.FIRST_PERSON;
         outsideControls.help = false; 
     }
 	

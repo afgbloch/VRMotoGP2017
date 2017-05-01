@@ -1,142 +1,201 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+
+///////////////////////////////////////////////////////////////////////////////////////////
+/// Camera Switcher 
+/// written by Boris Chuprin  
+/// and adapted by Bastien Chatelain and Aurelien Bloch 
+///////////////////////////////////////////////////////////////////////////////////////////
 public class camSwitcher : MonoBehaviour
 {
+    // The current camera is one of the following
+    private Camera currentCamera;
+    
+    //////////////////// First Person Camera///////////////////////////////////////////////
+    public Camera firstPersonCamera;
+    public Transform firstPersonCameraTarget;
+    private float speedFactor = 10.0f; //Acceleration factor of the moving direction 
+    private float maxLeft = -60;//Limit Left angle
+    private float maxRight = 60; //Limit Right angle
+    private float maxUp = -60; // Limit Up angle
+    private float maxDown = 10; // Limit Down angle
+    private float x = 0.0f; //Current horizontal angle
+    private float y = 0.0f; // current Vertical angle
 
-	public Camera backCamera;
-	public Camera aroundCamera;
-	public Transform cameraTarget;
-	private Camera currentCamera;
-	//////////////////// for back Camera 
-	float dist = 3.0f;
-	float height = 1.0f;
-	//////////////////// for around Camera
-	private float distance = 3.0f;
-	private float xSpeed = 10.0f;
-	private float ySpeed = 10.0f;
-	
-	private float yMinLimit = -90;
-	private float yMaxLimit = 90;
-	
-	private float distanceMin = 2;
-	private float distanceMax = 10;
-	
-	private float x = 0.0f;
-	private float y = 0.0f;
-	
-	private float smoothTime = 0.2f;
-	
-	private float xSmooth = 0.0f;
-	private float ySmooth = 0.0f; 
-	private float xVelocity = 0.0f;
-	private float yVelocity = 0.0f;
 
-	//new camera behaviour
-	private float currentTargetAngle;
+    //////////////////// Third Person Camera ///////////////////////////////////////////////
+    public Camera thirdPersonCamera;
+    public Transform thirdPersonCameraTarget;
+    float distThirdPersonCamera = 3.0f;
+	float heightThirdPersonCamera = 1.0f;
+
+
+    //Bonus - Camera behaviour by Boris Chuprin
+    private float currentTargetAngle;
+
+    // gameobject with script control variables
+    private GameObject ctrlHub;
+
+    // making a link to corresponding bike's script
+    private controlHub outsideControls;
 	
-	private GameObject ctrlHub;// gameobject with script control variables 
-	private controlHub outsideControls;// making a link to corresponding bike's script
-	
-	// Use this for initialization
-	void Start ()
+
+	/////////////////////// Initialization ////////////////////////////////////////////////////
+    void Start ()
 	{
-		ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
-		outsideControls = ctrlHub.GetComponent<controlHub>();//to connect c# mobile control script to this one
+        //link to GameObject with script "controlHub"
+        ctrlHub = GameObject.Find("gameScenario");
 
-		backCamera.enabled = true;
-		aroundCamera.enabled = false;
-		currentCamera = backCamera;
-		
-		if (GetComponent<Rigidbody> ()) GetComponent<Rigidbody> ().freezeRotation = true;
-	
-		currentTargetAngle = cameraTarget.transform.eulerAngles.z;
+        //to connect c# LeapMotion and Camera control
+        outsideControls = ctrlHub.GetComponent<controlHub>();
+
+        //By default first person camera is enabled and so current
+		firstPersonCamera.enabled = true;
+        thirdPersonCamera.enabled = false;
+		currentCamera = firstPersonCamera;
+        currentTargetAngle = firstPersonCameraTarget.transform.eulerAngles.z;
+        
 	}
-	
-	// Update is called once per frame
-	void LateUpdate ()
+
+    /////////////////////// Update once per frame///////////////////////////////////////////////
+    void LateUpdate ()
 	{
-#if UNITY_STANDALONE || UNITY_WEBPLAYER// turn camera rotaion ONLY for mobile for free touch screen anywhere
-		if (Input.GetMouseButton (1)) {
+        // Deal either with the first person camera or the third person camera 
 
-			backCamera.enabled = false;
-			aroundCamera.enabled = true;
-			backCamera.gameObject.SetActive (false);
-			aroundCamera.gameObject.SetActive (true);
-			currentCamera = aroundCamera;
-			
-			
-			x += Input.GetAxis ("Mouse X") * xSpeed;
-			y -= Input.GetAxis ("Mouse Y") * ySpeed;
-			
-			y = Mathf.Clamp (y, yMinLimit, yMaxLimit);
-			
-			
-			
-			xSmooth = Mathf.SmoothDamp (xSmooth, x, ref xVelocity, smoothTime);
-			ySmooth = Mathf.SmoothDamp (ySmooth, y, ref yVelocity, smoothTime);
-			
-			
-			distance = Mathf.Clamp (distance + Input.GetAxis ("Mouse ScrollWheel") * distance, distanceMin, distanceMax);
-			
-			
-			currentCamera.transform.localRotation = Quaternion.Euler (ySmooth, xSmooth, 0);
-			currentCamera.transform.position = currentCamera.transform.rotation * new Vector3 (0.0f, 0.0f, -distance) + cameraTarget.position;
+        if (outsideControls.cameraMode == controlHub.CameraMode.FIRST_PERSON)
+        {
+            // Change of camera mode if not already done
+            if (thirdPersonCamera.enabled)
+            {
+                thirdPersonCamera.enabled = false;
+                firstPersonCamera.enabled = true;
+                thirdPersonCamera.gameObject.SetActive(false);
+                firstPersonCamera.gameObject.SetActive(true);
+                currentCamera = firstPersonCamera;
+            }
 
+            // Control of field of view for inertiel effect and restrict it 
+            firstPersonCamera.fieldOfView = firstPersonCamera.fieldOfView + outsideControls.Vertical * 20f * Time.deltaTime;
+            if (firstPersonCamera.fieldOfView > 95)
+            {
+                firstPersonCamera.fieldOfView = 95;
+            }
+            if (firstPersonCamera.fieldOfView < 75)
+            {
+                firstPersonCamera.fieldOfView = 75;
+            }
+            if (firstPersonCamera.fieldOfView < 85)
+            {
+                firstPersonCamera.fieldOfView = firstPersonCamera.fieldOfView += 10f * Time.deltaTime;
+            }
+            if (firstPersonCamera.fieldOfView > 85)
+            {
+                firstPersonCamera.fieldOfView = firstPersonCamera.fieldOfView -= 10f * Time.deltaTime;
+            }
 
-		} else {
-#endif
-			backCamera.enabled = true;
-			aroundCamera.enabled = false;
-			backCamera.gameObject.SetActive (true);
-			aroundCamera.gameObject.SetActive (false);
-			currentCamera = backCamera;
-			
-			//////////////////// code for back Camera
-			backCamera.fieldOfView = backCamera.fieldOfView + outsideControls.Vertical * 20f * Time.deltaTime;
-			if (backCamera.fieldOfView > 85) {
-				backCamera.fieldOfView = 85;
-			}
-			if (backCamera.fieldOfView < 50) {
-				backCamera.fieldOfView = 50;
-			}
-			if (backCamera.fieldOfView < 60) {
-				backCamera.fieldOfView = backCamera.fieldOfView += 10f * Time.deltaTime;
-			}
-			if (backCamera.fieldOfView > 60) {
-				backCamera.fieldOfView = backCamera.fieldOfView -= 10f * Time.deltaTime;
-			}
-			
-			float wantedRotationAngle = cameraTarget.eulerAngles.y;
-			float wantedHeight = cameraTarget.position.y + height;
-			float currentRotationAngle = currentCamera.transform.eulerAngles.y;
-			float currentHeight = currentCamera.transform.position.y;
-			
-			currentRotationAngle = Mathf.LerpAngle (currentRotationAngle, wantedRotationAngle, 3 * Time.deltaTime);
-			currentHeight = Mathf.Lerp (currentHeight, wantedHeight, 2 * Time.deltaTime);
-			
-			Quaternion currentRotation = Quaternion.Euler (0, currentRotationAngle, 0);
-			currentCamera.transform.position = cameraTarget.position;
-			currentCamera.transform.position -= currentRotation * Vector3.forward * dist;
-			currentCamera.transform.position = new Vector3 (currentCamera.transform.position.x, currentHeight, currentCamera.transform.position.z);
-			currentCamera.transform.LookAt (cameraTarget);
+            // Orrientate the camera correctly 
+            float currentRotationAngle = firstPersonCameraTarget.eulerAngles.y;
+            float currentHeight = firstPersonCameraTarget.position.y;
 
-			//New camera features.
-			//Now camera leaning with biker, so horizon is not always horizontal :)
-			//If you don't like it, just disable
-			//from this -----------------------------------------------------------------------
+            Quaternion currentRotation = Quaternion.Euler(0, currentRotationAngle, 0);
+            currentCamera.transform.position = firstPersonCameraTarget.position;
+            currentCamera.transform.position = new Vector3(currentCamera.transform.position.x, currentHeight, currentCamera.transform.position.z);
+            currentCamera.transform.LookAt(firstPersonCameraTarget);
 
-			// rotate camera according with bike leaning
-			if (cameraTarget.transform.eulerAngles.z >0 && cameraTarget.transform.eulerAngles.z < 180) {
-				currentTargetAngle = cameraTarget.transform.eulerAngles.z/10;
-			}
-			if (cameraTarget.transform.eulerAngles.z >180){
-				currentTargetAngle = -(360-cameraTarget.transform.eulerAngles.z)/10;
-			}
-			currentCamera.transform.rotation = Quaternion.Euler (height*10, currentRotationAngle, currentTargetAngle);
-			//to this -------------------------------------------------------------------------
-		#if UNITY_STANDALONE || UNITY_WEBPLAYER// turn camera rotaion ONLY for mobile for free touch screen anywhere
-		}
-		#endif
-	}
+            //Bonus - Camera behaviour by Boris Chuprin : rotate camera according with bike leaning
+            if (firstPersonCameraTarget.transform.eulerAngles.z > 0 && firstPersonCameraTarget.transform.eulerAngles.z < 180)
+            {
+                currentTargetAngle = firstPersonCameraTarget.transform.eulerAngles.z / 10;
+            }
+            if (firstPersonCameraTarget.transform.eulerAngles.z > 180)
+            {
+                currentTargetAngle = -(360 - firstPersonCameraTarget.transform.eulerAngles.z) / 10;
+            }
+            currentCamera.transform.rotation = Quaternion.Euler(0.0f, currentRotationAngle, currentTargetAngle);
+
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            // Orientate the point of view in first person. 
+            // For now it use the right mouse click to move view. 
+            // TODO Map this functionality with the webcam view point direction
+            ///////////////////////////////////////////////////////////////////////////////////////////
+            if (Input.GetMouseButton(1))
+            {
+                //Get the delta mouse movement mapped between 0 and 1 and accelerate them with speed
+                x += Input.GetAxis("Mouse X") * speedFactor;
+                y -= Input.GetAxis("Mouse Y") * speedFactor;
+
+                // Current X is the current horizonatal angle of the bike. 
+                float currentX = currentCamera.transform.localRotation.eulerAngles.y;
+                
+                // Clamp the fov direction considering their Limit
+                x = Mathf.Clamp(x, maxLeft, maxRight);
+                y = Mathf.Clamp(y, maxUp, maxDown);
+  
+                currentCamera.transform.localRotation = Quaternion.Euler(y, currentX + x, 0);
+                currentCamera.transform.position = firstPersonCameraTarget.position;
+            }else{
+                x = 0.0f;
+                y = 0.0f; 
+            }
+            ///////////////////////////////////////////////////////////////////////////////////////////
+
+        } else if (outsideControls.cameraMode == controlHub.CameraMode.THIRD_PERSON){
+
+            // Change of camera mode if not already done
+            if (firstPersonCamera.enabled)
+            {
+                thirdPersonCamera.enabled = true;
+                firstPersonCamera.enabled = false;
+                thirdPersonCamera.gameObject.SetActive(true);
+                firstPersonCamera.gameObject.SetActive(false);
+                currentCamera = thirdPersonCamera;
+            }
+
+            // Control of field of view for inertiel effect and restrict it 
+            thirdPersonCamera.fieldOfView = thirdPersonCamera.fieldOfView + outsideControls.Vertical * 20f * Time.deltaTime;
+            if (thirdPersonCamera.fieldOfView > 85)
+            {
+                thirdPersonCamera.fieldOfView = 85;
+            }
+            if (thirdPersonCamera.fieldOfView < 50)
+            {
+                thirdPersonCamera.fieldOfView = 50;
+            }
+            if (thirdPersonCamera.fieldOfView < 60)
+            {
+                thirdPersonCamera.fieldOfView = thirdPersonCamera.fieldOfView += 10f * Time.deltaTime;
+            }
+            if (thirdPersonCamera.fieldOfView > 60)
+            {
+                thirdPersonCamera.fieldOfView = thirdPersonCamera.fieldOfView -= 10f * Time.deltaTime;
+            }
+
+            // Orrientate the camera correctly 
+            float wantedRotationAngle = thirdPersonCameraTarget.eulerAngles.y;
+            float wantedHeight = thirdPersonCameraTarget.position.y + heightThirdPersonCamera;
+            float currentRotationAngle = currentCamera.transform.eulerAngles.y;
+            float currentHeight = currentCamera.transform.position.y;
+
+            currentRotationAngle = Mathf.LerpAngle(currentRotationAngle, wantedRotationAngle, 3 * Time.deltaTime);
+            currentHeight = Mathf.Lerp(currentHeight, wantedHeight, 2 * Time.deltaTime);
+
+            Quaternion currentRotation = Quaternion.Euler(0, currentRotationAngle, 0);
+            currentCamera.transform.position = thirdPersonCameraTarget.position;
+            currentCamera.transform.position -= currentRotation * Vector3.forward * distThirdPersonCamera;
+            currentCamera.transform.position = new Vector3(currentCamera.transform.position.x, currentHeight, currentCamera.transform.position.z);
+            currentCamera.transform.LookAt(thirdPersonCameraTarget);
+
+            //Bonus - Camera behaviour by Boris Chuprin : rotate camera according with bike leaning
+            if (thirdPersonCameraTarget.transform.eulerAngles.z > 0 && thirdPersonCameraTarget.transform.eulerAngles.z < 180)
+            {
+                currentTargetAngle = thirdPersonCameraTarget.transform.eulerAngles.z / 10;
+            }
+            if (thirdPersonCameraTarget.transform.eulerAngles.z > 180)
+            {
+                currentTargetAngle = -(360 - thirdPersonCameraTarget.transform.eulerAngles.z) / 10;
+            }
+            currentCamera.transform.rotation = Quaternion.Euler(heightThirdPersonCamera * 10, currentRotationAngle, currentTargetAngle);   
+        }
+    }
 }

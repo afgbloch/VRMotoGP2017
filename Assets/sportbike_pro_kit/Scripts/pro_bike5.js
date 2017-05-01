@@ -101,7 +101,7 @@ function OnGUI ()
   	
   	//to show in on display interface: speed, gear and RPM
 	
-	if(outsideControls.cameraMode == controlHub.CameraMode.THIRD_PERSON){
+	if(true || outsideControls.cameraMode == controlHub.CameraMode.THIRD_PERSON){
 		GUI.color = Color.black;
 		GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
 		GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
@@ -346,28 +346,33 @@ function FixedUpdate (){
 ///////////////////////////////////////////// FUNCTIONS /////////////////////////////////////////////////////////
 function ShiftGears() {
 
-	var AppropriateGear : int = CurrentGear;
 		
 	if ( EngineRPM >= MaxEngineRPM ) {
 		
+		var AppropriateGear : int = CurrentGear;
+
 		for ( var i = 0; i < GearRatio.length; i++ ) {
 			if (coll_rearWheel.rpm * GearRatio[i] < MaxEngineRPM ) {
 				AppropriateGear = i;
 				break;
-			}
+			}		
 		}
+		CurrentGear = AppropriateGear;
 	}
 	
 	if ( EngineRPM <= MinEngineRPM ) {
 		
+		AppropriateGear = CurrentGear;
+
 		for ( var j = GearRatio.length-1; j >= 0; j-- ) {
-			if (coll_rearWheel.rpm * GearRatio[i] > MinEngineRPM ) {
+			if (coll_rearWheel.rpm * GearRatio[j] > MinEngineRPM ) {
 				AppropriateGear = j;
 				break;
 			}
 		}
+	
+		CurrentGear = AppropriateGear;
 	}
-	CurrentGear = AppropriateGear;
 }
 	
 function ApplyLocalPositionToVisuals (collider : WheelCollider) {
