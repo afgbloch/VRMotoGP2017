@@ -5,7 +5,7 @@ using System.Collections;
 //so, it's just a holder for all control variables
 //mobile/keyboard scripts sends nums(float, int, bools) to this one
 
-public class controlHub : MonoBehaviour  {//need that for mobile controls
+public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public enum CameraMode { FIRST_PERSON = 1, THIRD_PERSON };
 

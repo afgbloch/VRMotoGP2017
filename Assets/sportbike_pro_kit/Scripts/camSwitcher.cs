@@ -53,9 +53,10 @@ public class camSwitcher : MonoBehaviour
         //By default first person camera is enabled and so current
 		firstPersonCamera.enabled = true;
         thirdPersonCamera.enabled = false;
-		currentCamera = firstPersonCamera;
+        firstPersonCamera.gameObject.SetActive(true);
+        thirdPersonCamera.gameObject.SetActive(false);
+        currentCamera = firstPersonCamera;
         currentTargetAngle = firstPersonCameraTarget.transform.eulerAngles.z;
-        
 	}
 
     /////////////////////// Update once per frame///////////////////////////////////////////////
@@ -68,6 +69,7 @@ public class camSwitcher : MonoBehaviour
             // Change of camera mode if not already done
             if (thirdPersonCamera.enabled)
             {
+                Debug.Log("YOLOY");
                 thirdPersonCamera.enabled = false;
                 firstPersonCamera.enabled = true;
                 thirdPersonCamera.gameObject.SetActive(false);
