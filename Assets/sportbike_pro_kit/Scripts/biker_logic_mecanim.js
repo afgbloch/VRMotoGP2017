@@ -16,17 +16,9 @@ private var bikerMoveAlong : float = 0.0;
 //variables for moving reverse animation
 private var reverseSpeed : float = 0.0;
 
-// point of head tracking for(you may disable it or put it on any object you want - the rider will look on that object)
-private var lookPoint : Transform;
-
 // standard point of interest for a head
-var camPoint : Transform;
+//var camPoint : Transform;
 
-// this point may be throwed to anything you want rider looking at
-var poi01 : Transform;//for example now it's a gameObject "car". It means when rider near a "car"(distanceToPoi = 50 meters) he will look at "car" until he move far than 50 meters.
-
-//the distance rider will look for POI(point of interest)
-var distanceToPoi : float; //in meters = 50 by default
 
 // variables for hand IK joint points
 var IK_rightHandTarget :  Transform;
@@ -37,30 +29,30 @@ var fakeCharPhysJoint : Transform;
 
 //we need to know bike we ride on
 var bikeRideOn : GameObject;
-//why it's here ? because you might use this script with many bikes in one scene
 
-private var bikeStatusCrashed : pro_bike5;// making a link to corresponding bike's script
-//why it's here ? because you might use this script with many bikes in one scene
+// making a link to corresponding bike's script
+private var bikeStatusCrashed : pro_bike5;
 
-private var ctrlHub : GameObject;// gameobject with script control variables 
-private var outsideControls : controlHub;// making a link to corresponding bike's script
+// gameobject with script control variables
+private var ctrlHub : GameObject; 
+
+// making a link to corresponding bike's script
+private var outsideControls : controlHub;
 
 function Start () {
 
-ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
-outsideControls = ctrlHub.GetComponent(controlHub);//to connect c# mobile control script to this one
+	//link to GameObject with script "controlHub"
+	ctrlHub = GameObject.Find("gameScenario");
+	//to connect c# leap motion and camera control script to this one
+	outsideControls = ctrlHub.GetComponent(controlHub);
 
-myAnimator = GetComponent(Animator);
-lookPoint = camPoint;//use it if you want to rider look at anything when riding
-
-//need to know when bike crashed to launch a ragdoll
-bikeStatusCrashed = bikeRideOn.GetComponent(pro_bike5);
-myAnimator.SetLayerWeight(2, 0); //to turn off layer with reverse animation which override all other
-
+	//to turn off layer with reverse animation which override all other
+	myAnimator = GetComponent(Animator);
+	myAnimator.SetLayerWeight(2, 0); 
 }
 
 //fundamental mecanim IK script
-//just keeps hands on wheelbar :)
+//just keeps hands on wheelbar
 function OnAnimatorIK(layerIndex: int) {
 	if (IK_rightHandTarget != null){
 		myAnimator.SetIKPositionWeight(AvatarIKGoal.RightHand,IK_rightWeight);
@@ -74,19 +66,19 @@ function OnAnimatorIK(layerIndex: int) {
     	myAnimator.SetIKPosition(AvatarIKGoal.LeftHand,IK_leftHandTarget.position);
     	myAnimator.SetIKRotation(AvatarIKGoal.LeftHand,IK_leftHandTarget.rotation);
     }
-    //same for a head
-	myAnimator.SetLookAtPosition(lookPoint.transform.position); 
-	myAnimator.SetLookAtWeight(0.5f);//0.5f - means it rotates head 50% mixed with real animations 
 }
 
 function Update () {
+
 	//moves character with fake inertia
 	if (fakeCharPhysJoint){
 		this.transform.localEulerAngles.x = fakeCharPhysJoint.localEulerAngles.x;
 		this.transform.localEulerAngles.y = fakeCharPhysJoint.localEulerAngles.y;
 		this.transform.localEulerAngles.z = fakeCharPhysJoint.localEulerAngles.z;
-	} else return;
-	
+	} else {
+		return;
+	}
+
 	//the character should play animations when player press control keys
 	//horizontal movement
 	if (outsideControls.Horizontal <0 && bikerLeanAngle > -1.0){
@@ -121,14 +113,9 @@ function Update () {
 	//function for avarage rider pose
 	bikerComeback();
 
-	//scan do rider see POI
-	if (poi01.gameObject.SetActive && distanceToPoi > Vector3.Distance(this.transform.position, poi01.transform.position)){
-		lookPoint = poi01;
-		//if not - still looking forward for a rigidbody POI right before bike
-	} else lookPoint = camPoint;
 	
 	// pull leg(s) down when bike stopped
-	if (Mathf.Round((bikeRideOn.GetComponent.<Rigidbody>().velocity.magnitude * 3.6)*10) * 0.1 <= 15 && !bikeStatusCrashed.isReverseOn){//no reverse speed
+	if (Mathf.Round((bikeRideOn.GetComponent.<Rigidbody>().velocity.magnitude * 3.6)*10) * 0.1 <= 15){//no reverse speed
 	reverseSpeed = 0.0;
 	myAnimator.SetFloat("reverseSpeed", reverseSpeed);
 	
@@ -139,11 +126,12 @@ function Update () {
 		 	}
 		}
 	}
-	//when using reverse speed
-	if (Mathf.Round((bikeRideOn.GetComponent.<Rigidbody>().velocity.magnitude * 3.6)*10) * 0.1 <= 15 && bikeStatusCrashed.isReverseOn){//reverse speed
 
-	myAnimator.SetLayerWeight(3, legOffValue);
-	myAnimator.SetLayerWeight(2, 1); //to turn on layer with reverse animation which override all other
+	//when using reverse speed
+	if (Mathf.Round((bikeRideOn.GetComponent.<Rigidbody>().velocity.magnitude * 3.6)*10) * 0.1 <= 15 ){//reverse speed
+
+		myAnimator.SetLayerWeight(3, legOffValue);
+		myAnimator.SetLayerWeight(2, 1); //to turn on layer with reverse animation which override all other
 
 		reverseSpeed = bikeStatusCrashed.bikeSpeed/3;
 		myAnimator.SetFloat("reverseSpeed", reverseSpeed);
@@ -152,8 +140,8 @@ function Update () {
 		}
 		
 		myAnimator.speed = reverseSpeed;
-	} else 
-	if (Mathf.Round((bikeRideOn.GetComponent.<Rigidbody>().velocity.magnitude * 3.6)*10) * 0.1 > 15){
+
+	} else 	if (Mathf.Round((bikeRideOn.GetComponent.<Rigidbody>().velocity.magnitude * 3.6)*10) * 0.1 > 15){
 		reverseSpeed = 0.0;
 		myAnimator.SetFloat("reverseSpeed", reverseSpeed);
 		myAnimator.SetLayerWeight(3, legOffValue);
