@@ -1,5 +1,8 @@
 ﻿#pragma strict
+///////////////////////////////////////////////////////////////////////////////////////////////////
 /// Writen by Boris Chuprin smokerr@mail.ru
+/// And adapted by Bastien Chatelain and Aurelien Bloch
+///////////////////////////////////////////////////////////////////////////////////////////////////
 private var myAnimator : Animator;
 
 // variables for turn IK link off for a time
@@ -28,12 +31,6 @@ var distanceToPoi : float; //in meters = 50 by default
 // variables for hand IK joint points
 var IK_rightHandTarget :  Transform;
 var IK_leftHandTarget :  Transform;
-
-//ragdoll define
-var ragDoll : GameObject;
-
-//variable for only one ragdoll create when crashed
-private var ragdollLaunched : boolean = false;
 
 //fake joint for physical movement biker to imitate inertia
 var fakeCharPhysJoint : Transform;
@@ -82,8 +79,6 @@ function OnAnimatorIK(layerIndex: int) {
 	myAnimator.SetLookAtWeight(0.5f);//0.5f - means it rotates head 50% mixed with real animations 
 }
 
-
-
 function Update () {
 	//moves character with fake inertia
 	if (fakeCharPhysJoint){
@@ -116,49 +111,15 @@ function Update () {
 		myAnimator.SetFloat("moveAlong", bikerMoveAlong);
 	}
 	
-	//pilot's mass tranform movement
-	if (outsideControls.HorizontalMassShift <0 && bikerLeanAngle > -1.0){
-		bikerLeanAngle = bikerLeanAngle -= 6 * Time.deltaTime;
-		if (bikerLeanAngle < outsideControls.HorizontalMassShift) bikerLeanAngle = outsideControls.HorizontalMassShift;
-		myAnimator.SetFloat("lean", bikerLeanAngle);
-	}
-	if (outsideControls.HorizontalMassShift >0 && bikerLeanAngle < 1.0){
-		bikerLeanAngle = bikerLeanAngle += 6 * Time.deltaTime;
-		if (bikerLeanAngle > outsideControls.HorizontalMassShift) bikerLeanAngle = outsideControls.HorizontalMassShift;
-		myAnimator.SetFloat("lean", bikerLeanAngle);
-	}
-	if (outsideControls.VerticalMassShift > 0 && bikerMoveAlong < 1.0){
-		bikerMoveAlong = bikerMoveAlong += 3 * Time.deltaTime;
-		if (bikerLeanAngle > outsideControls.VerticalMassShift) bikerLeanAngle = outsideControls.VerticalMassShift;
-		myAnimator.SetFloat("moveAlong", bikerMoveAlong);
-	}
-	if (outsideControls.VerticalMassShift < 0 && bikerMoveAlong >- 1.0){
-		bikerMoveAlong = bikerMoveAlong -= 3 * Time.deltaTime;
-		if (bikerLeanAngle < outsideControls.VerticalMassShift) bikerLeanAngle = outsideControls.VerticalMassShift;
-		myAnimator.SetFloat("moveAlong", bikerMoveAlong);
-	}
 	
 	//in a case of restart
 	if (outsideControls.restartBike){
-		//delete ragdoll when restarting scene
-		var RGtoDestroy = GameObject.Find("char_ragDoll(Clone)");
-		Destroy(RGtoDestroy);
-		//make character visible again
 		var riderBodyVis = transform.Find("root/Hips");
 		riderBodyVis.gameObject.SetActive(true);
-		//now we can crash again
-		ragdollLaunched = false;
 	}
 	
 	//function for avarage rider pose
 	bikerComeback();
-	
-	//in case of crashed call ragdoll
-	if (bikeRideOn.transform.name == "rigid_bike"){
-		if (bikeStatusCrashed.crashed && !ragdollLaunched){	
-			createRagDoll();
-		}
-	}
 
 	//scan do rider see POI
 	if (poi01.gameObject.SetActive && distanceToPoi > Vector3.Distance(this.transform.position, poi01.transform.position)){
@@ -199,12 +160,10 @@ function Update () {
 		myAnimator.SetLayerWeight(2, 0); //to turn off layer with reverse animation which override all other
 		myAnimator.speed = 1;
 	}
-	
-
 }
 
 function bikerComeback(){
-	if (outsideControls.Horizontal == 0 && outsideControls.HorizontalMassShift == 0){
+	if (outsideControls.Horizontal == 0 ){
 		if (bikerLeanAngle > 0){
 			bikerLeanAngle = bikerLeanAngle -= 6 * Time.deltaTime;//6 - "magic number" of speed of pilot's body movement back across. Just 6 - face it :)
 			myAnimator.SetFloat("lean", bikerLeanAngle);
@@ -214,7 +173,7 @@ function bikerComeback(){
 			myAnimator.SetFloat("lean", bikerLeanAngle);
 		}
 	}
-	if (outsideControls.Vertical == 0 && outsideControls.VerticalMassShift == 0){
+	if (outsideControls.Vertical == 0){
 		if (bikerMoveAlong > 0){
 			bikerMoveAlong = bikerMoveAlong -= 2 * Time.deltaTime;//3 - "magic number" of speed of pilot's body movement back along. Just 3 - face it :)
 			myAnimator.SetFloat("moveAlong", bikerMoveAlong);
@@ -224,71 +183,4 @@ function bikerComeback(){
 			myAnimator.SetFloat("moveAlong", bikerMoveAlong);
 		}
 	}
-}
-
-
-//creating regdoll(we need to scan every bone of character when crashed and copy that preset to created ragdoll)
-function createRagDoll(){
-  if(!ragdollLaunched){
-	var pilotHips = transform.Find("root/Hips");
-	var pilotChest = transform.Find("root/Hips/Spine/Chest");
-	var pilotHead = transform.Find("root/Hips/Spine/Chest/Neck/Head");
-	var pilotLeftArm = transform.Find("root/Hips/Spine/Chest/lShoulder/lArm");
-	var pilotLeftForeArm = transform.Find("root/Hips/Spine/Chest/lShoulder/lArm/lForearm");
-	var pilotRightArm = transform.Find("root/Hips/Spine/Chest/rShoulder/rArm");
-	var pilotRightForeArm = transform.Find("root/Hips/Spine/Chest/rShoulder/rArm/rForearm");
-	var pilotLeftUpperLeg = transform.Find("root/Hips/lUpperLeg");
-	var pilotLeftLeg = transform.Find("root/Hips/lUpperLeg/lLeg");
-	var pilotRightUpperLeg = transform.Find("root/Hips/rUpperLeg");
-	var pilotRightLeg = transform.Find("root/Hips/rUpperLeg/rLeg");
-	// looking for an current angles of bones rotation
-	var pilotHipsAngle = pilotHips.transform.localRotation;
-	var pilotChestAngle = pilotChest.transform.localRotation;
-	var pilotHeadAngle = pilotHead.transform.localRotation;
-	var pilotLeftArmAngle = pilotLeftArm.transform.localRotation;
-	var pilotLeftForeArmAngle = pilotLeftForeArm.transform.localRotation;
-	var pilotRightArmAngle = pilotRightArm.transform.localRotation;
-	var pilotRightForeArmAngle = pilotRightForeArm.transform.localRotation;
-	var pilotLeftUpperLegAngle = pilotLeftUpperLeg.transform.localRotation;
-	var pilotLeftLegAngle = pilotLeftLeg.transform.localRotation;
-	var pilotRightUpperLegAngle = pilotRightUpperLeg.transform.localRotation;
-	var pilotRightLegAngle = pilotRightLeg.transform.localRotation;
-	//hiding the rider
-	var riderBodyVis = transform.Find("root/Hips");
-	var currentPilotPosition = this.transform.position;
-	var currentPilotRotation = this.transform.rotation;
-	riderBodyVis.gameObject.SetActive(false);
-	// creating ragdoll
-	Instantiate (ragDoll, currentPilotPosition, currentPilotRotation);
-	// new empty varables to fill it with learned angles later
-	var RDpilotHips = ragDoll.transform.Find("root/Hips");
-	var RDpilotChest = ragDoll.transform.Find("root/Hips/Spine/Chest");
-	var RDpilotHead = ragDoll.transform.Find("root/Hips/Spine/Chest/Neck/Head");
-	var RDpilotLeftArm = ragDoll.transform.Find("root/Hips/Spine/Chest/lShoulder/lArm");
-	var RDpilotLeftForeArm = ragDoll.transform.Find("root/Hips/Spine/Chest/lShoulder/lArm/lForearm");
-	var RDpilotRightArm = ragDoll.transform.Find("root/Hips/Spine/Chest/rShoulder/rArm");
-	var RDpilotRightForeArm = ragDoll.transform.Find("root/Hips/Spine/Chest/rShoulder/rArm/rForearm");
-	var RDpilotLeftUpperLeg = ragDoll.transform.Find("root/Hips/lUpperLeg");
-	var RDpilotLeftLeg = ragDoll.transform.Find("root/Hips/lUpperLeg/lLeg");
-	var RDpilotRightUpperLeg = ragDoll.transform.Find("root/Hips/rUpperLeg");
-	var RDpilotRightLeg = ragDoll.transform.Find("root/Hips/rUpperLeg/rLeg");
-	// copy known angles to new bones
-	RDpilotHips.localRotation = pilotHipsAngle;
-	RDpilotChest.localRotation = pilotChestAngle;
-	RDpilotHead.localRotation = pilotHeadAngle;
-	RDpilotLeftArm.localRotation = pilotLeftArmAngle;
-	RDpilotLeftForeArm.localRotation = pilotLeftForeArmAngle;
-	RDpilotRightArm.localRotation = pilotRightArmAngle;
-	RDpilotRightForeArm.localRotation = pilotRightForeArmAngle;
-	RDpilotLeftUpperLeg.localRotation = pilotLeftUpperLegAngle;
-	RDpilotLeftLeg.localRotation = pilotLeftLegAngle;
-	RDpilotRightUpperLeg.localRotation = pilotRightUpperLegAngle;
-	RDpilotRightLeg.localRotation = pilotRightLegAngle;
-	ragdollLaunched = true;
-
-	if (bikeRideOn.transform.name == "rigid_bike" && !bikeStatusCrashed.crashed){//check for crahsed status
-		bikeStatusCrashed.crashed = true;
-		bikeStatusCrashed.GetComponent.<Rigidbody>().centerOfMass = Vector3(0, -0.2, 0);
-	}
-  }
 }
