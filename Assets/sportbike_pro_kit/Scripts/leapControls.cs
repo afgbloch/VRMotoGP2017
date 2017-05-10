@@ -24,7 +24,7 @@ public class leapControls : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-
+		
 		Frame frame = controller.Frame ();
 		HandList hands = frame.Hands;
 		Hand left = null, right = null;
