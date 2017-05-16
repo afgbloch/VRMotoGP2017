@@ -1,18 +1,36 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Leap;
+using OpenCvSharp;
 
 public class leapControls : MonoBehaviour {
-
 
 	private GameObject ctrlHub;// making a link to corresponding bike's script
 	private controlHub outsideControls;// making a link to corresponding bike's script
 	Controller controller;
 	Frame first;
 	bool init = false;
+    // webcam video
+    public Webcam wc = new Webcam();
+    // opencv video
+    public OCVCam ocv = new OCVCam();
+    CvHaarClassifierCascade cascade;
+    // scaleFactor defines the spatial resolution for distance from camera
+    [Range(1.01f, 2.5f)]
+    public double scaleFactor = 1.1;
+    // unity cam to match our physical webcam
+    public Camera camUnity;
+    // distance between camUnity and webcam imgPlane
+    float wcImgPlaneDist = 1.0f;
+    // approx. size of a face
+    float knownFaceSize = 0.15f;
+    Vector3 priorPos = new Vector3();
+    public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
+    // object to be controlled with head position
+    public Transform controlledTr;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
 		ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
 		outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
 
@@ -20,10 +38,31 @@ public class leapControls : MonoBehaviour {
 		outsideControls.help = false; 
 	
 		controller = new Controller ();
-	}
 
-	// Update is called once per frame
-	void Update () {
+        // init webcam capture and render to plane
+        if (wc.InitWebcam()) {
+            // init openCV image converter
+            ocv.InitOCVCam(wc);
+        } else {
+            Debug.LogError("[WebcamOpenCV.cs] no camera device has been found! " +
+                            "Certify that a camera is connected and its drivers " +
+                            "are working.");
+            return;
+        }
+
+        // webcam and camUnity must have matching FOV
+        camUnity.fieldOfView = wc.camFOV;
+        FitPlaneIntoFOV(wc.imgPlane);
+
+
+        cascade = CvHaarClassifierCascade.FromFile("Assets/TP5HeadTracking/haarcascade_frontalface_alt.xml");
+
+        // scale controlled object to match face size
+        controlledTr.localScale = knownFaceSize * Vector3.one;
+    }
+
+    // Update is called once per frame
+    void Update () {
 		
 		Frame frame = controller.Frame ();
 		HandList hands = frame.Hands;
@@ -61,11 +100,13 @@ public class leapControls : MonoBehaviour {
 			if (init && right.GrabStrength == 1) {
 				speed += right.RotationAngle (first);
 			}
+
+            speed = speed / 2.0f;
 			
-			if (speed > 1) {
-				outsideControls.Vertical = 1;
-			} else if (speed < -1) {
-				outsideControls.Vertical = -1;
+			if (speed > 0.9f) {
+				outsideControls.Vertical = 0.9f;
+			} else if (speed < -0.9f) {
+				outsideControls.Vertical = -0.9f;
 			} else {
 				outsideControls.Vertical = speed;
 			}
@@ -75,5 +116,112 @@ public class leapControls : MonoBehaviour {
 			init = false;
 		}
 
-	}
+        ocv.UpdateOCVMat();
+        TrackHead3DSmooth();
+    }
+
+    void TrackHead3DSmooth() {
+
+        Vector3 cvHeadPos = new Vector3();
+
+        if (HaarClassCascade(ref cvHeadPos)) {
+
+            float faceAng = AngularSize.GetAngSize(wcImgPlaneDist, knownFaceSize);
+            float faceHeightRatio = faceAng / camUnity.fieldOfView;
+            cvHeadPos.z = ((faceHeightRatio * (float)ocv.cvMat.Height) /
+                          (float)cvHeadPos.z) * wcImgPlaneDist;
+            cvHeadPos = CvMat2ScreenCoord(cvHeadPos);
+            cvHeadPos = camUnity.ScreenToWorldPoint(cvHeadPos);
+
+            // the tracking is noisy, thus we only consider the new reading if it  
+            // lands less than .4 meters away from the last smoothed position
+            if ((cvHeadPos - priorPos).magnitude < 0.4f)
+                priorPos = cvHeadPos;
+        }
+
+        // update the smoothing / prediction model
+        posSmoothPred.UpdateModel(priorPos);
+        // update the position of unity object
+        Vector3 v = posSmoothPred.StepPredict();
+
+        //controlledTr.position = v;
+
+        float tilt = v.x * 3;
+
+        if (tilt > 0.9f)
+        {
+            outsideControls.Horizontal = 0.9f;
+        }
+        else if (tilt < -0.9f)
+        {
+            outsideControls.Horizontal = -0.9f;
+        }
+        else
+        {
+            outsideControls.Horizontal = tilt;
+        }
+
+        //outsideControls.Horizontal = 
+        //print("x:" + v.x + " y:" + v.y + " z:" + v.z);
+    }
+
+    bool HaarClassCascade(ref Vector3 cvTrackedPos) {
+        CvMemStorage storage = new CvMemStorage();
+        storage.Clear();
+
+        // define minimum head size to 1/10 of the img width
+        int minSize = ocv.cvMat.Width / 10;
+
+        // run the Haar detector algorithm
+        // docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html
+        CvSeq<CvAvgComp> faces =
+            Cv.HaarDetectObjects(ocv.cvMat, cascade, storage, scaleFactor, 2,
+                                  0 | HaarDetectionType.ScaleImage,
+                                  new CvSize(minSize, minSize));
+
+        // if faces have been found ....
+        if (faces.Total > 0) {
+            // rectangle defining face 1
+            CvRect r = faces[0].Value.Rect;
+            // approx. eye center for x,y coordinates
+            cvTrackedPos.x = r.X + r.Width * 0.5f;
+            cvTrackedPos.y = r.Y + r.Height * 0.3f;
+            // approx. the face diameter based on the rectangle size
+            cvTrackedPos.z = (r.Width + r.Height) * 0.5f;
+
+            return true;    // YES, we found a face!
+        }
+        else
+            return false;   // no faces in this frame
+    }
+
+    public Vector3 CvMat2ScreenCoord(Vector3 cvPos) {
+        // rescale x,y position from cvMat coordinates to screen coordinates 
+        cvPos.x = ((float)camUnity.pixelWidth / (float)ocv.cvMat.Width) * cvPos.x;
+        // swap the y coordinate origin and +y direction 
+        cvPos.y = ((float)camUnity.pixelHeight / (float)ocv.cvMat.Height) * (ocv.cvMat.Height - cvPos.y);
+
+        return cvPos;
+    }
+
+    void FitPlaneIntoFOV(Transform wcImgPlane) {
+
+        wcImgPlane.parent = camUnity.transform;
+
+        // set plane position and orientation facing camUnity
+        wcImgPlane.rotation = Quaternion.LookRotation(camUnity.transform.forward,
+                                                      camUnity.transform.up);
+        wcImgPlane.position = camUnity.transform.position +
+                              wcImgPlaneDist * camUnity.transform.forward;
+
+        // Fit the imgPlane into the unity camera FOV 
+        // compute vertical imgPlane size from FOV angle
+        float vScale = AngularSize.GetSize(wcImgPlaneDist, camUnity.fieldOfView);
+        // set the scale 
+        Vector3 wcPlaneScale = wcImgPlane.localScale;
+        float ratioWH = ((float)wc.camWidth / (float)wc.camHeight);
+        wcPlaneScale.x = ratioWH * vScale * wcPlaneScale.x;
+        wcPlaneScale.y = vScale * wcPlaneScale.y;
+        wcImgPlane.localScale = wcPlaneScale;
+    }
 }

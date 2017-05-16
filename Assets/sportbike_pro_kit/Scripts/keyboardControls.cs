@@ -21,15 +21,15 @@ public class keyboardControls : MonoBehaviour {
 	void Update () {
         /////////////////////////////// ACCELERATE, braking, turning //////////////////////////////
         //to get less than 0.9 as acceleration to prevent wheelie(wheelie begins at >0.9)
-        outsideControls.Vertical = Input.GetAxis ("Vertical") / 1.112f;
+        //outsideControls.Vertical = Input.GetAxis ("Vertical") / 1.112f;
 
         //need to get 1(full power) for front brake
-        if (Input.GetAxis("Vertical") < 0)
-        {
-            outsideControls.Vertical = outsideControls.Vertical * 1.112f;
-        }
+        //if (Input.GetAxis("Vertical") < 0)
+        //{
+        //    outsideControls.Vertical = outsideControls.Vertical * 1.112f;
+        //}
 
-        outsideControls.Horizontal = Input.GetAxis("Horizontal");
+        //outsideControls.Horizontal = Input.GetAxis("Horizontal");
 		
         
 		/////////////////////////////////// Restart ////////////////////////////////////////////////
