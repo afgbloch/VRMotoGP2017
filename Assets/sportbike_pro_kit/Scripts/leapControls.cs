@@ -55,7 +55,7 @@ public class leapControls : MonoBehaviour {
         FitPlaneIntoFOV(wc.imgPlane);
 
 
-        cascade = CvHaarClassifierCascade.FromFile("Assets/TP5HeadTracking/haarcascade_frontalface_alt.xml");
+        cascade = CvHaarClassifierCascade.FromFile("Assets/HeadTracking/haarcascade_frontalface_alt.xml");
 
         // scale controlled object to match face size
         controlledTr.localScale = knownFaceSize * Vector3.one;
