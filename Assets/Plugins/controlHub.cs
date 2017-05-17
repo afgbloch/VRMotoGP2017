@@ -9,6 +9,9 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public enum CameraMode { FIRST_PERSON = 1, THIRD_PERSON };
 
+
+    public bool keyboardOnly = true; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
+
     public float Vertical;//variable translated to bike script for bike accelerate/stop and leaning
 	public float Horizontal;//variable translated to bike script for pilot's mass shift
 
@@ -19,7 +22,7 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
 	public bool restartBike;//this variable says to bike's script restart
 	public bool fullRestartBike; //this variable says to bike's script to full restart
-
+    
 	public bool reverse;//for reverse speed
 
     public bool help; 

@@ -88,6 +88,12 @@ private var ctrlHub : GameObject;
 // making a link to corresponding bike's script
 private var outsideControls : controlHub;
 
+
+// initial position and rotation of the bike for full Restart.
+var initialPosition : Vector3; 
+var initialRotation : Quaternion; 
+
+
 /////////////////////////////////////////  ON SCREEN INFO /////////////////////////////////////////
 function OnGUI ()
 {
@@ -101,27 +107,22 @@ function OnGUI ()
   	
   	//to show in on display interface: speed, gear and RPM
 	
-	if(true || outsideControls.cameraMode == controlHub.CameraMode.THIRD_PERSON){
-		GUI.color = Color.black;
-		GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
-		GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
+	GUI.color = Color.black;
+	GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
+	GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
     
-		if (!isReverseOn){
-			GUI.color = Color.grey;
-			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
-		} else {
-			GUI.color = Color.red;
-			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
-		}
-	}else if (outsideControls.cameraMode == controlHub.CameraMode.FIRST_PERSON){
-
-
+	if (!isReverseOn){
+		GUI.color = Color.grey;
+		GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
+	} else {
+		GUI.color = Color.red;
+		GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
 	}
-
+	
     // user info help box lines
 	if(outsideControls.help){
 		GUI.color = Color.white;
-		GUI.Box (Rect (10,10,180,20), "A,W,S,D or arrows - main control", smallerText);
+		GUI.Box (Rect (10,10,180,20), "arrows - main control", smallerText);
 		// TODO Add more ?
 		GUI.color = Color.black; 
 	}
@@ -167,12 +168,17 @@ function Start () {
 	normalRearSuspSpring = coll_rearWheel.suspensionSpring.spring;
 	normalFrontSuspSpring = coll_frontWheel.suspensionSpring.spring; 
 
+	initialPosition = this.transform.position + Vector3(0,0.1,0); 
+	initialRotation =  this.transform.rotation; 
+
 	outsideControls.restartBike = true; 
 }
 
 
 function FixedUpdate (){
 	
+
+
 	// if RPM is more than engine can hold we should shift gear up or down
 	EngineRPM = coll_rearWheel.rpm * GearRatio[CurrentGear];
 	if (EngineRPM > EngineRedline){
@@ -330,9 +336,19 @@ function FixedUpdate (){
 	
 	////////////////////////////////// RESTART KEY ////////////////////////////////////////////////////////
 	// Restart key - recreate bike few meters above current place
+	
+	if (outsideControls.fullRestartBike){
+
+		this.transform.position = initialPosition; 
+		this.transform.rotation = initialRotation;  
+
+		outsideControls.restartBike = true; 
+	}
+
+
 	if (outsideControls.restartBike){
 		
-		transform.position+=Vector3(0,0.1,0);
+		//transform.position+=Vector3(0,0.1,0);
 		transform.rotation=Quaternion.Euler( 0.0, transform.localEulerAngles.y, 0.0 );
 		GetComponent.<Rigidbody>().velocity=Vector3.zero;
 		GetComponent.<Rigidbody>().angularVelocity=Vector3.zero;

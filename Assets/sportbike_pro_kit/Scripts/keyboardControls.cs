@@ -19,22 +19,29 @@ public class keyboardControls : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
+        // Enable the keyboard only mode
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            outsideControls.keyboardOnly = !outsideControls.keyboardOnly;
+        }
+
+
         /////////////////////////////// ACCELERATE, braking, turning //////////////////////////////
         //to get less than 0.9 as acceleration to prevent wheelie(wheelie begins at >0.9)
-        //outsideControls.Vertical = Input.GetAxis ("Vertical") / 1.112f;
+        if (outsideControls.keyboardOnly)
+        {
+            outsideControls.Vertical = Input.GetAxis("Vertical") / 1.112f;
 
-        //need to get 1(full power) for front brake
-        //if (Input.GetAxis("Vertical") < 0)
-        //{
-        //    outsideControls.Vertical = outsideControls.Vertical * 1.112f;
-        //}
+            if (Input.GetAxis("Vertical") < 0)
+            {
+                //need to get 1(full power) for front brake
+                outsideControls.Vertical = outsideControls.Vertical * 1.112f;
+            }
 
-        //outsideControls.Horizontal = Input.GetAxis("Horizontal");
-
-
-        outsideControls.camVrView = Input.GetMouseButton(1);
-        outsideControls.CamX = Input.GetAxis("Mouse X");
-        outsideControls.CamY = Input.GetAxis("Mouse Y");
+            outsideControls.Horizontal = Input.GetAxis("Horizontal");
+        }
+        
 
 
         /////////////////////////////////// Restart ////////////////////////////////////////////////
@@ -73,7 +80,13 @@ public class keyboardControls : MonoBehaviour {
                 outsideControls.cameraMode = controlHub.CameraMode.FIRST_PERSON;
             }
         }
-        
+
+        if (outsideControls.keyboardOnly)
+        {
+            outsideControls.camVrView = Input.GetMouseButton(1);
+            outsideControls.CamX = Input.GetAxis("Mouse X");
+            outsideControls.CamY = Input.GetAxis("Mouse Y");
+        }
 
     }
 }
