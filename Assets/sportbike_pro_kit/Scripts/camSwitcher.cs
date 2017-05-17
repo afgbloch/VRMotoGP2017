@@ -15,7 +15,6 @@ public class camSwitcher : MonoBehaviour
     //////////////////// First Person Camera///////////////////////////////////////////////
     public Camera firstPersonCamera;
     public Transform firstPersonCameraTarget;
-    private float speedFactor = 10.0f; //Acceleration factor of the moving direction 
     private float maxLeft = -60;//Limit Left angle
     private float maxRight = 60; //Limit Right angle
     private float maxUp = -60; // Limit Up angle
@@ -62,6 +61,7 @@ public class camSwitcher : MonoBehaviour
     /////////////////////// Update once per frame///////////////////////////////////////////////
     void LateUpdate ()
 	{
+
         // Deal either with the first person camera or the third person camera 
 
         if (outsideControls.cameraMode == controlHub.CameraMode.FIRST_PERSON)
@@ -120,11 +120,12 @@ public class camSwitcher : MonoBehaviour
             // For now it use the right mouse click to move view. 
             // TODO Map this functionality with the webcam view point direction
             ///////////////////////////////////////////////////////////////////////////////////////////
-            if (Input.GetMouseButton(1))
+            if (outsideControls.camVrView)
             {
-                //Get the delta mouse movement mapped between 0 and 1 and accelerate them with speed
-                x += Input.GetAxis("Mouse X") * speedFactor;
-                y -= Input.GetAxis("Mouse Y") * speedFactor;
+                float speedFactor = outsideControls.camSpeed;
+
+                x += outsideControls.CamX * speedFactor;
+                y -= outsideControls.CamY * speedFactor;
 
                 // Current X is the current horizonatal angle of the bike. 
                 float currentX = currentCamera.transform.localRotation.eulerAngles.y;

@@ -30,11 +30,16 @@ public class keyboardControls : MonoBehaviour {
         //}
 
         //outsideControls.Horizontal = Input.GetAxis("Horizontal");
-		
-        
-		/////////////////////////////////// Restart ////////////////////////////////////////////////
-		// Restart & full restart
-		if (Input.GetKey (KeyCode.R)) {
+
+
+        outsideControls.camVrView = Input.GetMouseButton(1);
+        outsideControls.CamX = Input.GetAxis("Mouse X");
+        outsideControls.CamY = Input.GetAxis("Mouse Y");
+
+
+        /////////////////////////////////// Restart ////////////////////////////////////////////////
+        // Restart & full restart
+        if (Input.GetKey (KeyCode.R)) {
 			outsideControls.restartBike = true;
 		} else
 			outsideControls.restartBike = false;

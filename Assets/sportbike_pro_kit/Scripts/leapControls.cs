@@ -28,6 +28,7 @@ public class leapControls : MonoBehaviour {
     public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
     // object to be controlled with head position
     public Transform controlledTr;
+    Vector2 oldV;
 
     // Use this for initialization
     void Start () {
@@ -59,6 +60,9 @@ public class leapControls : MonoBehaviour {
 
         // scale controlled object to match face size
         controlledTr.localScale = knownFaceSize * Vector3.one;
+
+        outsideControls.camSpeed = 50.0f;
+        outsideControls.camVrView = true;
     }
 
     // Update is called once per frame
@@ -126,6 +130,8 @@ public class leapControls : MonoBehaviour {
 
         if (HaarClassCascade(ref cvHeadPos)) {
 
+
+
             float faceAng = AngularSize.GetAngSize(wcImgPlaneDist, knownFaceSize);
             float faceHeightRatio = faceAng / camUnity.fieldOfView;
             cvHeadPos.z = ((faceHeightRatio * (float)ocv.cvMat.Height) /
@@ -162,7 +168,13 @@ public class leapControls : MonoBehaviour {
         }
 
         //outsideControls.Horizontal = 
-        //print("x:" + v.x + " y:" + v.y + " z:" + v.z);
+        print("x:" + v.x + " y:" + v.y + " z:" + v.z);
+        //controlledTr.rotation = Quaternion.Euler(v.x, v.y, v.z);
+
+
+        outsideControls.CamX = v.x - oldV.x;
+        outsideControls.CamY = v.y - oldV.y;
+        oldV = v;
     }
 
     bool HaarClassCascade(ref Vector3 cvTrackedPos) {
@@ -207,7 +219,7 @@ public class leapControls : MonoBehaviour {
     void FitPlaneIntoFOV(Transform wcImgPlane) {
 
         wcImgPlane.parent = camUnity.transform;
-
+ 
         // set plane position and orientation facing camUnity
         wcImgPlane.rotation = Quaternion.LookRotation(camUnity.transform.forward,
                                                       camUnity.transform.up);
