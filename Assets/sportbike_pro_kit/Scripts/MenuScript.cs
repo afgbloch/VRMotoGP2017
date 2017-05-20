@@ -11,7 +11,7 @@ public class MenuScript : MonoBehaviour {
     // Get the game controls objects
     private GameObject ctrlHub;
     private controlHub outsideControls;
-    private readonly string[] CONTROL_MODE = { "keyboard only", "use body tilt", "use hand tilt" };
+    private readonly string[] CONTROL_MODE = { "Mode: keyboard", "Mode: body tilt", "Mode: hand tilt" };
 
     void OnGUI ()
 	{

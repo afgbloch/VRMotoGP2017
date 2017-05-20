@@ -27,7 +27,7 @@ private var tmpMassShift : float = 0.0;
 // define CoM of bike
 var CoM : Transform; //CoM object
 //normalCoM is for situation when script need to return CoM in starting position :
-var normalCoM : float; 
+var normalCoM : float = 0.0; 
 
 //maximum the bike can be inclined Horizontaly
 var maxHorizontalAngle : float; 
@@ -182,9 +182,9 @@ function FixedUpdate (){
 
 
 	// if RPM is more than engine can hold we should shift gear up or down
-	EngineRPM = coll_rearWheel.rpm * GearRatio[CurrentGear];
+	EngineRPM = Mathf.Max(0.0, coll_rearWheel.rpm * GearRatio[CurrentGear]);
 	if (EngineRPM > EngineRedline){
-		EngineRPM = MaxEngineRPM;
+		EngineRPM = Mathf.Max(0.0, MaxEngineRPM);
 	}
 	ShiftGears();
 	
@@ -207,7 +207,6 @@ function FixedUpdate (){
 
 
 	// drag and angular drag for emulate air resistance
-	//Debug.Log(GetComponent.<Rigidbody>().velocity.magnitude/210 * airResistance );
 	GetComponent.<Rigidbody>().drag = GetComponent.<Rigidbody>().velocity.magnitude / 210 * airResistance; // when 250 bike can easy beat 200km/h // ~55 m/s
 	GetComponent.<Rigidbody>().angularDrag = 7 + GetComponent.<Rigidbody>().velocity.magnitude/20;
 	
@@ -217,9 +216,13 @@ function FixedUpdate (){
 
 	/////////////////////////// ACCELERATE ///////////////////////////////////////////////////////////
 	//forward case
-	if (outsideControls.Vertical >0 && !isReverseOn){
+	
+	
+
+	if (outsideControls.Vertical > 0 && !isReverseOn){
 		//we need that to fix strange unity bug when bike stucks if you press "accelerate" just after "brake".
 		coll_frontWheel.brakeTorque = 0;
+		coll_rearWheel.brakeTorque = 0;
 		coll_rearWheel.motorTorque = EngineTorque * outsideControls.Vertical;
 
 	
@@ -233,10 +236,10 @@ function FixedUpdate (){
 		GetComponent.<Rigidbody>().centerOfMass = Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
 	
 	}
-		
 	//reverse case
-	if (outsideControls.Vertical > 0 && isReverseOn){
+	else if (outsideControls.Vertical > 0 && isReverseOn){
 		coll_frontWheel.brakeTorque = 0;
+		coll_rearWheel.brakeTorque = 0;
 		//need to make reverse really slow
 		coll_rearWheel.motorTorque = Mathf.Min(EngineTorque * -outsideControls.Vertical/10 + (bikeSpeed*50), 0.0f);
 		// debug - rear wheel is green when accelerate
@@ -250,12 +253,14 @@ function FixedUpdate (){
 		CoM.localPosition.y = normalCoM;
 		GetComponent.<Rigidbody>().centerOfMass = Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
 	}
-
-
+	else{
+	// slow down when non accelerate 
+		//progressively reduce torque
+		coll_rearWheel.motorTorque = Mathf.Max(0, coll_rearWheel.motorTorque - 0.01 * airResistance);
+	}
 
 	RearSuspensionRestoration();
-		
-		
+			
 	//////////////////////////////////// BRAKING /////////////////////////////////////////////////////
 	if (outsideControls.Vertical <0){
 
@@ -290,7 +295,13 @@ function FixedUpdate (){
 		}
 
 	} else {
+	
+		if(outsideControls.Vertical == 0){
+			coll_rearWheel.brakeTorque = Mathf.Max(0, coll_rearWheel.brakeTorque + airResistance);
+			print(coll_rearWheel.brakeTorque);
+		}
 
+		
 		// Front part reset
 		{
 			FrontSuspensionRestoration();
@@ -298,7 +309,8 @@ function FixedUpdate (){
 		
 		//Rear part reset 
 		{
-			coll_rearWheel.brakeTorque = 0;
+			
+
 
 			stiffPowerGain = stiffPowerGain -= 0.05;
 			if (stiffPowerGain < 0){
@@ -315,7 +327,6 @@ function FixedUpdate (){
 		isReverseOn = true;
 	}
 	else if (!outsideControls.reverse && bikeSpeed >=0 && isReverseOn){
-	Debug.Log(bikeSpeed); 
 		isReverseOn = false;
 	}
 
@@ -343,7 +354,7 @@ function FixedUpdate (){
 
 		this.transform.position = initialPosition; 
 		this.transform.rotation = initialRotation;  
-
+		print("FULL RESTART");
 		outsideControls.restartBike = true; 
 	}
 

@@ -12,7 +12,7 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public ControlMode contolMode = ControlMode.KEYBOARD_ONLY; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
 
-    public float Vertical;//variable translated to bike script for bike accelerate/stop and leaning
+    public float Vertical = -1;//variable translated to bike script for bike accelerate/stop and leaning
 	public float Horizontal;//variable translated to bike script for pilot's mass shift
 
     public float CamX;
