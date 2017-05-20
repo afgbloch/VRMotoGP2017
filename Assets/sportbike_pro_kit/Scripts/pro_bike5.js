@@ -97,34 +97,36 @@ var initialRotation : Quaternion;
 /////////////////////////////////////////  ON SCREEN INFO /////////////////////////////////////////
 function OnGUI ()
 {
-	//Prepare Styles for different Label size
-	var biggerText = new GUIStyle("label");
-  	biggerText.fontSize = 40;
-  	var middleText = new GUIStyle("label");
-  	middleText.fontSize = 22;
-  	var smallerText = new GUIStyle("label");
-  	smallerText.fontSize = 14;
+	if(GameObject.Find("menuCamera") == null){
+		//Prepare Styles for different Label size
+		var biggerText = new GUIStyle("label");
+  		biggerText.fontSize = 40;
+  		var middleText = new GUIStyle("label");
+  		middleText.fontSize = 22;
+  		var smallerText = new GUIStyle("label");
+  		smallerText.fontSize = 14;
   	
-  	//to show in on display interface: speed, gear and RPM
+  		//to show in on display interface: speed, gear and RPM
 	
-	GUI.color = Color.black;
-	GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
-	GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
+		GUI.color = Color.black;
+		GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
+		GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
     
-	if (!isReverseOn){
-		GUI.color = Color.grey;
-		GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
-	} else {
-		GUI.color = Color.red;
-		GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
-	}
+		if (!isReverseOn){
+			GUI.color = Color.grey;
+			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
+		} else {
+			GUI.color = Color.red;
+			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
+		}
 	
-    // user info help box lines
-	if(outsideControls.help){
-		GUI.color = Color.white;
-		GUI.Box (Rect (10,10,180,20), "arrows - main control", smallerText);
-		// TODO Add more ?
-		GUI.color = Color.black; 
+		// user info help box lines
+		if(outsideControls.help){
+			GUI.color = Color.white;
+			GUI.Box (Rect (10,10,180,20), "arrows - main control", smallerText);
+			// TODO Add more ?
+			GUI.color = Color.black; 
+		}
 	}
 }
 

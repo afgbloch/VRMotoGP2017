@@ -25,6 +25,8 @@ public class keyboardControls : MonoBehaviour {
             outsideControls.pauseResume();
         }
         
+
+
         // Change the mode of controle
         if (Input.GetKeyDown(KeyCode.M))
         {
@@ -37,7 +39,7 @@ public class keyboardControls : MonoBehaviour {
         if (outsideControls.contolMode == controlHub.ControlMode.KEYBOARD_ONLY)
         {
             outsideControls.Vertical = Input.GetAxis("Vertical") / 1.112f;
-
+            
             if (Input.GetAxis("Vertical") < 0)
             {
                 //need to get 1(full power) for front brake

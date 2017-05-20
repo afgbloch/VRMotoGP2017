@@ -33,9 +33,10 @@ public class startScript : MonoBehaviour {
         // Start Item
         mediumText.normal.background = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
             && Input.mousePosition.y < Screen.height - 350 && Input.mousePosition.y > Screen.height - 350 - 40 ? tex : texAlpha; 
-        if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start", mediumText))
+        if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start / Resume", mediumText))
         {
-            SceneManager.LoadScene("FirstSceneWithTerrainTreeLevel");
+            Time.timeScale = 1;
+            Destroy(gameObject) ;
         }
 
         // One other item
@@ -69,6 +70,14 @@ public class startScript : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        
-	}
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Time.timeScale = 1;
+            Destroy(gameObject);
+        }
+
+
+
+    }
 }
