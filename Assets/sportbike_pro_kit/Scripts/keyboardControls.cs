@@ -36,7 +36,7 @@ public class keyboardControls : MonoBehaviour {
 
         /////////////////////////////// ACCELERATE, braking, turning //////////////////////////////
         //to get less than 0.9 as acceleration to prevent wheelie(wheelie begins at >0.9)
-        if (outsideControls.contolMode == controlHub.ControlMode.KEYBOARD_ONLY)
+        if (outsideControls.controlMode == controlHub.ControlMode.KEYBOARD_ONLY)
         {
             outsideControls.Vertical = Input.GetAxis("Vertical") / 1.112f;
             
@@ -81,12 +81,21 @@ public class keyboardControls : MonoBehaviour {
             outsideControls.switchCamera(); 
         }
 
-        if (outsideControls.contolMode == controlHub.ControlMode.KEYBOARD_ONLY)
+        if (outsideControls.controlMode == controlHub.ControlMode.KEYBOARD_ONLY)
         {
             outsideControls.camVrView = Input.GetMouseButton(1);
             outsideControls.CamX = Input.GetAxis("Mouse X");
             outsideControls.CamY = Input.GetAxis("Mouse Y");
+
+            outsideControls.menuStartStop = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                && Input.mousePosition.y < Screen.height - 350 && Input.mousePosition.y > Screen.height - 350 - 40;
+
+            outsideControls.menuMode = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                && Input.mousePosition.y < Screen.height - 400 && Input.mousePosition.y > Screen.height - 400 - 40;
+
+            outsideControls.menuExit = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                && Input.mousePosition.y < Screen.height - 450 && Input.mousePosition.y > Screen.height - 450 - 40;            
         }
-        
+
     }
 }
