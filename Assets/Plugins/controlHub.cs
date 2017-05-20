@@ -8,9 +8,12 @@ using System.Collections;
 public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public enum CameraMode { FIRST_PERSON = 1, THIRD_PERSON };
+    public enum ControlMode {KEYBOARD_ONLY = 1,  BODY_TILT, HAND_TILT}
+
+    public bool isPaused = false; 
 
 
-    public bool keyboardOnly = true; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
+    public ControlMode contolMode = ControlMode.KEYBOARD_ONLY; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
 
     public float Vertical;//variable translated to bike script for bike accelerate/stop and leaning
 	public float Horizontal;//variable translated to bike script for pilot's mass shift
@@ -28,4 +31,48 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
     public bool help; 
 
     public CameraMode cameraMode;  
+
+
+    public void pauseResume()
+    {
+
+        isPaused = !isPaused;
+
+        if (isPaused)
+        {
+            Time.timeScale = 0;
+            Application.LoadLevelAdditive(1);
+
+        }
+        else
+        {
+            Time.timeScale = 1;
+        }
+
+    }
+
+    public void switchCamera()
+    {
+        if (cameraMode == CameraMode.FIRST_PERSON)
+        {
+            cameraMode = CameraMode.THIRD_PERSON;
+        }
+        else if (cameraMode == CameraMode.THIRD_PERSON)
+        {
+            cameraMode = CameraMode.FIRST_PERSON;
+        }
+    }
+
+    public void nextControlMode()
+    {
+
+        if (contolMode == ControlMode.KEYBOARD_ONLY)
+            contolMode = ControlMode.BODY_TILT;
+        else if (contolMode == ControlMode.BODY_TILT)
+            contolMode = ControlMode.HAND_TILT;
+        else if (contolMode == ControlMode.HAND_TILT)
+            contolMode = ControlMode.KEYBOARD_ONLY; 
+
+    }
+
 }

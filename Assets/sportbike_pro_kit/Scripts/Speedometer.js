@@ -24,6 +24,7 @@ function Start () {
 
 
 function OnGUI() {
+
 	// speedometer
 	GUI.DrawTexture(Rect(Screen.width*0.85, Screen.height*0.8, GUIDashboard.width/2, GUIDashboard.height/2), GUIDashboard);
 	var centre = Vector2(Screen.width*0.85 + GUIDashboard.width / 4, Screen.height*0.8 + GUIDashboard.height / 4);

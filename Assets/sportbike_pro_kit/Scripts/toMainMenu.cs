@@ -12,7 +12,10 @@ public class toMainMenu : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if  (Input.GetKeyDown(KeyCode.Escape)){
-            SceneManager.LoadScene("VRMotoGP2017_MainMenu");
+            //SceneManager.LoadScene("VRMotoGP2017_MainMenu");
+
+            Time.timeScale = 0;
+            Application.LoadLevelAdditive(1);
         }
 	}
 }

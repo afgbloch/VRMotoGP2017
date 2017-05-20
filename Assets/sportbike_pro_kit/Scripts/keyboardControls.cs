@@ -20,16 +20,21 @@ public class keyboardControls : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-        // Enable the keyboard only mode
-        if (Input.GetKeyDown(KeyCode.K))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            outsideControls.keyboardOnly = !outsideControls.keyboardOnly;
+            outsideControls.pauseResume();
+        }
+        
+        // Change the mode of controle
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            outsideControls.nextControlMode(); 
         }
 
 
         /////////////////////////////// ACCELERATE, braking, turning //////////////////////////////
         //to get less than 0.9 as acceleration to prevent wheelie(wheelie begins at >0.9)
-        if (outsideControls.keyboardOnly)
+        if (outsideControls.contolMode == controlHub.ControlMode.KEYBOARD_ONLY)
         {
             outsideControls.Vertical = Input.GetAxis("Vertical") / 1.112f;
 
@@ -71,22 +76,15 @@ public class keyboardControls : MonoBehaviour {
         /////////////////////////////////// Change View //////////////////////////////////////////////
         if (Input.GetKeyDown(KeyCode.V))
         {
-            if(outsideControls.cameraMode == controlHub.CameraMode.FIRST_PERSON)
-            {
-                outsideControls.cameraMode = controlHub.CameraMode.THIRD_PERSON;
-            }
-            else if (outsideControls.cameraMode == controlHub.CameraMode.THIRD_PERSON)
-            {
-                outsideControls.cameraMode = controlHub.CameraMode.FIRST_PERSON;
-            }
+            outsideControls.switchCamera(); 
         }
 
-        if (outsideControls.keyboardOnly)
+        if (outsideControls.contolMode == controlHub.ControlMode.KEYBOARD_ONLY)
         {
             outsideControls.camVrView = Input.GetMouseButton(1);
             outsideControls.CamX = Input.GetAxis("Mouse X");
             outsideControls.CamY = Input.GetAxis("Mouse Y");
         }
-
+        
     }
 }

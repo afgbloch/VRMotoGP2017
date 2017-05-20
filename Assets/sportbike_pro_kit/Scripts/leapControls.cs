@@ -61,7 +61,7 @@ public class leapControls : MonoBehaviour {
         // scale controlled object to match face size
         controlledTr.localScale = knownFaceSize * Vector3.one;
 
-        if (!outsideControls.keyboardOnly) {
+        if (outsideControls.contolMode != controlHub.ControlMode.KEYBOARD_ONLY) {
             outsideControls.camSpeed = 50.0f;
             outsideControls.camVrView = true;
         }
@@ -71,7 +71,7 @@ public class leapControls : MonoBehaviour {
     // Update is called once per frame
     void Update () {
 
-        if (!outsideControls.keyboardOnly) {
+        if (outsideControls.contolMode != controlHub.ControlMode.KEYBOARD_ONLY) {
             Frame frame = controller.Frame();
             HandList hands = frame.Hands;
             Hand left = null, right = null;
