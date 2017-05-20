@@ -10,7 +10,7 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
     public enum CameraMode { FIRST_PERSON = 0, THIRD_PERSON };
     public enum ControlMode {KEYBOARD_ONLY=0,  BODY_TILT, HAND_TILT}
 
-    public ControlMode contolMode = ControlMode.KEYBOARD_ONLY; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
+    public ControlMode controlMode = ControlMode.KEYBOARD_ONLY; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
 
     public float Vertical;//variable translated to bike script for bike accelerate/stop and leaning
 	public float Horizontal;//variable translated to bike script for pilot's mass shift
@@ -20,7 +20,12 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
     public float camSpeed = 10.0f;//Acceleration factor of the moving direction
     public bool camVrView;
 
-	public bool restartBike;//this variable says to bike's script restart
+    public bool menuStartStop;
+    public bool menuMode;
+    public bool menuExit;
+    public bool menuClick;
+
+    public bool restartBike;//this variable says to bike's script restart
 	public bool fullRestartBike; //this variable says to bike's script to full restart
     
 	public bool reverse;//for reverse speed
@@ -58,12 +63,12 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public void nextControlMode()
     {
-        if (contolMode == ControlMode.KEYBOARD_ONLY)
-            contolMode = ControlMode.BODY_TILT;
-        else if (contolMode == ControlMode.BODY_TILT)
-            contolMode = ControlMode.HAND_TILT;
-        else if (contolMode == ControlMode.HAND_TILT)
-            contolMode = ControlMode.KEYBOARD_ONLY; 
+        if (controlMode == ControlMode.KEYBOARD_ONLY)
+            controlMode = ControlMode.BODY_TILT;
+        else if (controlMode == ControlMode.BODY_TILT)
+            controlMode = ControlMode.HAND_TILT;
+        else if (controlMode == ControlMode.HAND_TILT)
+            controlMode = ControlMode.KEYBOARD_ONLY; 
     }
 
 }

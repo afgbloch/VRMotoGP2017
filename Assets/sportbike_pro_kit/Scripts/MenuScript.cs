@@ -36,17 +36,17 @@ public class MenuScript : MonoBehaviour {
         //TODO : Replace the mouse position with metaphore on the leap motion
 
         // Start Item
-        mediumText.normal.background = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
-            && Input.mousePosition.y < Screen.height - 350 && Input.mousePosition.y > Screen.height - 350 - 40 ? tex : texAlpha; 
-        if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start / Resume", mediumText))
+        mediumText.normal.background = outsideControls.menuStartStop ? tex : texAlpha;
+        
+        if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start / Resume", mediumText) || (outsideControls.menuStartStop && outsideControls.menuClick))
         {
-            resume(); 
+            resume();
         }
 
         // One other item
-        mediumText.normal.background = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
-            && Input.mousePosition.y < Screen.height - 400 && Input.mousePosition.y > Screen.height - 400 - 40 ? tex : texAlpha;
-        if (GUI.Button(new Rect(Screen.width - 300, 400, 300, 40), CONTROL_MODE[(int)outsideControls.contolMode], mediumText))
+        mediumText.normal.background = outsideControls.menuMode ? tex : texAlpha;
+
+        if (GUI.Button(new Rect(Screen.width - 300, 400, 300, 40), CONTROL_MODE[(int)outsideControls.controlMode], mediumText) || (outsideControls.menuMode && outsideControls.menuClick))
         {
             // Ready to add new menu option
 
@@ -55,9 +55,9 @@ public class MenuScript : MonoBehaviour {
         }
 
         // Exit item
-        mediumText.normal.background = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
-            && Input.mousePosition.y < Screen.height - 450 && Input.mousePosition.y > Screen.height - 450 - 40 ? tex : texAlpha;
-        if (GUI.Button(new Rect(Screen.width - 300, 450, 300, 40), "Exit", mediumText))
+        mediumText.normal.background = outsideControls.menuExit ? tex : texAlpha;
+        
+        if (GUI.Button(new Rect(Screen.width - 300, 450, 300, 40), "Exit", mediumText) || (outsideControls.menuExit && outsideControls.menuClick))
         {
             Application.Quit();
         }
@@ -80,15 +80,6 @@ public class MenuScript : MonoBehaviour {
         outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
 
 
-    }
-
-    // Update is called once per frame
-    void Update () {
-
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            resume(); 
-        }
     }
 
     // Resume the game by destroying the menu 

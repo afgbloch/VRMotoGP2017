@@ -29,6 +29,7 @@ public class leapControls : MonoBehaviour {
     // object to be controlled with head position
     public Transform controlledTr;
     Vector2 oldV;
+    Vector oldMenuVector = new Vector();
 
     // Use this for initialization
     void Start () {
@@ -61,23 +62,41 @@ public class leapControls : MonoBehaviour {
         // scale controlled object to match face size
         controlledTr.localScale = knownFaceSize * Vector3.one;
 
-        if (outsideControls.contolMode != controlHub.ControlMode.KEYBOARD_ONLY) {
+        if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
             outsideControls.camSpeed = 500.0f;
             outsideControls.camVrView = true;
         }
 
     }
-
+    
     // Update is called once per frame
     void Update () {
 
-        if (outsideControls.contolMode != controlHub.ControlMode.KEYBOARD_ONLY) {
+        if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
             Frame frame = controller.Frame();
             HandList hands = frame.Hands;
             Hand left = null, right = null;
             bool valid = false;
             outsideControls.restartBike = false;
             float speed = 0;
+
+            if (hands.Count > 0 && hands[0].IsRight && outsideControls.menuOn)
+            {
+
+                Vector menuV = hands[0].PalmPosition;
+
+                outsideControls.menuStartStop = menuV.y > 60;
+                outsideControls.menuMode = 40 < menuV.y && menuV.y < 60;
+                outsideControls.menuExit = menuV.y < 20;
+
+
+                float delta = oldMenuVector.z - menuV.z;
+                if (delta > 45)
+                {
+                    outsideControls.menuClick = true;
+                }
+                oldMenuVector = menuV;
+            }
 
             if (hands.Count == 2) {
                 if (hands[0].IsLeft) {
@@ -119,7 +138,7 @@ public class leapControls : MonoBehaviour {
                     outsideControls.Vertical = speed;
                 }
 
-                if (outsideControls.contolMode == controlHub.ControlMode.HAND_TILT) {
+                if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
                     Vector leftV = left.PalmPosition;
                     Vector rightV = right.PalmPosition;
                     float tilt = (rightV.z - leftV.z) / 300.0f;
@@ -139,8 +158,6 @@ public class leapControls : MonoBehaviour {
                         outsideControls.Horizontal = tilt;
                     }
                 }
-
-
             } else {
                 init = false;
             }
@@ -174,7 +191,7 @@ public class leapControls : MonoBehaviour {
         // update the position of unity object
         Vector3 v = posSmoothPred.StepPredict();
 
-        if (outsideControls.contolMode == controlHub.ControlMode.BODY_TILT) {
+        if (outsideControls.controlMode == controlHub.ControlMode.BODY_TILT) {
             float tilt = v.x * 3;
 
             if (tilt > 0.9f)
@@ -191,7 +208,7 @@ public class leapControls : MonoBehaviour {
             }
         }
 
-        if (outsideControls.contolMode == controlHub.ControlMode.HAND_TILT) {
+        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
             outsideControls.CamX = v.x - oldV.x;
             outsideControls.CamY = v.y - oldV.y;
             oldV = v;
