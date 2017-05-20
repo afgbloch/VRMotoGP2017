@@ -61,67 +61,72 @@ public class leapControls : MonoBehaviour {
         // scale controlled object to match face size
         controlledTr.localScale = knownFaceSize * Vector3.one;
 
-        outsideControls.camSpeed = 50.0f;
-        outsideControls.camVrView = true;
+        if (!outsideControls.keyboardOnly) {
+            outsideControls.camSpeed = 50.0f;
+            outsideControls.camVrView = true;
+        }
+
     }
 
     // Update is called once per frame
     void Update () {
-		
-		Frame frame = controller.Frame ();
-		HandList hands = frame.Hands;
-		Hand left = null, right = null;
-		bool valid = false;
-		outsideControls.restartBike = false;
-		float speed = 0;
 
-		if (hands.Count == 2) {
-			if (hands [0].IsLeft) {
-				left = hands [0];
-				right = hands [1];
-			} else {
-				left = hands [1];
-				right = hands [0];
-			}
-			valid = true;
-		}
+        if (!outsideControls.keyboardOnly) {
+            Frame frame = controller.Frame();
+            HandList hands = frame.Hands;
+            Hand left = null, right = null;
+            bool valid = false;
+            outsideControls.restartBike = false;
+            float speed = 0;
 
-		if (valid) {
+            if (hands.Count == 2) {
+                if (hands[0].IsLeft) {
+                    left = hands[0];
+                    right = hands[1];
+                } else {
+                    left = hands[1];
+                    right = hands[0];
+                }
+                valid = true;
+            }
 
-			speed -= left.GrabStrength;
+            if (valid) {
 
-			if (!init && right.GrabStrength == 1) {
-				print ("---- INIT -----");
-				first = frame;
-				init = true;
-			}
+                speed -= left.GrabStrength;
 
-			if (init && right.GrabStrength == 0) {
-				init = false;
-			}
-				
+                if (!init && right.GrabStrength == 1) {
+                    print("---- INIT -----");
+                    first = frame;
+                    init = true;
+                }
 
-			if (init && right.GrabStrength == 1) {
-				speed += right.RotationAngle (first);
-			}
+                if (init && right.GrabStrength == 0) {
+                    init = false;
+                }
 
-            speed = speed / 2.0f;
-			
-			if (speed > 0.9f) {
-				outsideControls.Vertical = 0.9f;
-			} else if (speed < -0.9f) {
-				outsideControls.Vertical = -0.9f;
-			} else {
-				outsideControls.Vertical = speed;
-			}
-				
 
-		} else {
-			init = false;
-		}
+                if (init && right.GrabStrength == 1) {
+                    speed += right.RotationAngle(first);
+                }
 
-        ocv.UpdateOCVMat();
-        TrackHead3DSmooth();
+                speed = speed / 2.0f;
+
+                if (speed > 0.9f) {
+                    outsideControls.Vertical = 0.9f;
+                } else if (speed < -0.9f) {
+                    outsideControls.Vertical = -0.9f;
+                } else {
+                    outsideControls.Vertical = speed;
+                }
+
+
+            } else {
+                init = false;
+            }
+
+            ocv.UpdateOCVMat();
+            TrackHead3DSmooth();
+        }
     }
 
     void TrackHead3DSmooth() {
