@@ -62,7 +62,7 @@ public class leapControls : MonoBehaviour {
         controlledTr.localScale = knownFaceSize * Vector3.one;
 
         if (outsideControls.contolMode != controlHub.ControlMode.KEYBOARD_ONLY) {
-            outsideControls.camSpeed = 50.0f;
+            outsideControls.camSpeed = 500.0f;
             outsideControls.camVrView = true;
         }
 
@@ -119,6 +119,27 @@ public class leapControls : MonoBehaviour {
                     outsideControls.Vertical = speed;
                 }
 
+                if (outsideControls.contolMode == controlHub.ControlMode.HAND_TILT) {
+                    Vector leftV = left.PalmPosition;
+                    Vector rightV = right.PalmPosition;
+                    float tilt = (rightV.z - leftV.z) / 300.0f;
+
+                    //print("Tilt:" + tilt + " lz:" + leftV.z + " rz:" + rightV.z);
+
+                    if (tilt > 0.9f)
+                    {
+                        outsideControls.Horizontal = 0.9f;
+                    }
+                    else if (tilt < -0.9f)
+                    {
+                        outsideControls.Horizontal = -0.9f;
+                    }
+                    else
+                    {
+                        outsideControls.Horizontal = tilt;
+                    }
+                }
+
 
             } else {
                 init = false;
@@ -134,8 +155,6 @@ public class leapControls : MonoBehaviour {
         Vector3 cvHeadPos = new Vector3();
 
         if (HaarClassCascade(ref cvHeadPos)) {
-
-
 
             float faceAng = AngularSize.GetAngSize(wcImgPlaneDist, knownFaceSize);
             float faceHeightRatio = faceAng / camUnity.fieldOfView;
@@ -155,31 +174,28 @@ public class leapControls : MonoBehaviour {
         // update the position of unity object
         Vector3 v = posSmoothPred.StepPredict();
 
-        //controlledTr.position = v;
+        if (outsideControls.contolMode == controlHub.ControlMode.BODY_TILT) {
+            float tilt = v.x * 3;
 
-        float tilt = v.x * 3;
-
-        if (tilt > 0.9f)
-        {
-            outsideControls.Horizontal = 0.9f;
+            if (tilt > 0.9f)
+            {
+                outsideControls.Horizontal = 0.9f;
+            }
+            else if (tilt < -0.9f)
+            {
+                outsideControls.Horizontal = -0.9f;
+            }
+            else
+            {
+                outsideControls.Horizontal = tilt;
+            }
         }
-        else if (tilt < -0.9f)
-        {
-            outsideControls.Horizontal = -0.9f;
+
+        if (outsideControls.contolMode == controlHub.ControlMode.HAND_TILT) {
+            outsideControls.CamX = v.x - oldV.x;
+            outsideControls.CamY = v.y - oldV.y;
+            oldV = v;
         }
-        else
-        {
-            outsideControls.Horizontal = tilt;
-        }
-
-        //outsideControls.Horizontal = 
-        print("x:" + v.x + " y:" + v.y + " z:" + v.z);
-        //controlledTr.rotation = Quaternion.Euler(v.x, v.y, v.z);
-
-
-        outsideControls.CamX = v.x - oldV.x;
-        outsideControls.CamY = v.y - oldV.y;
-        oldV = v;
     }
 
     bool HaarClassCascade(ref Vector3 cvTrackedPos) {
