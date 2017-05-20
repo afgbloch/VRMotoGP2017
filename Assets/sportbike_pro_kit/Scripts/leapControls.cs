@@ -62,7 +62,7 @@ public class leapControls : MonoBehaviour {
         controlledTr.localScale = knownFaceSize * Vector3.one;
 
         if (outsideControls.contolMode != controlHub.ControlMode.KEYBOARD_ONLY) {
-            outsideControls.camSpeed = 50.0f;
+            outsideControls.camSpeed = 500.0f;
             outsideControls.camVrView = true;
         }
 
