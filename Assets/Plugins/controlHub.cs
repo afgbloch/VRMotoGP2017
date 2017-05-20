@@ -29,6 +29,8 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public CameraMode cameraMode;
 
+    public bool menuOn = false;
+
     void Start()
     {
         pauseResume(); 
@@ -38,6 +40,7 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
     public void pauseResume()
     {
         Time.timeScale = 0;
+        menuOn = true;
         Application.LoadLevelAdditive(1); // 1 is menu in the build settings
     }
 

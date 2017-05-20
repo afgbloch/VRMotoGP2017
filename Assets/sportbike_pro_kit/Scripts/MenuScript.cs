@@ -97,5 +97,6 @@ public class MenuScript : MonoBehaviour {
     {
         Time.timeScale = 1;
         Destroy(gameObject);
+        outsideControls.menuOn = false;
     }
 }
