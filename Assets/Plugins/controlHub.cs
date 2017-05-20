@@ -7,8 +7,8 @@ using System.Collections;
 
 public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
-    public enum CameraMode { FIRST_PERSON = 1, THIRD_PERSON };
-    public enum ControlMode {KEYBOARD_ONLY = 1,  BODY_TILT, HAND_TILT}
+    public enum CameraMode { FIRST_PERSON = 0, THIRD_PERSON };
+    public enum ControlMode {KEYBOARD_ONLY=0,  BODY_TILT, HAND_TILT}
 
     public ControlMode contolMode = ControlMode.KEYBOARD_ONLY; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
 
@@ -27,13 +27,18 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
     public bool help; 
 
-    public CameraMode cameraMode;  
+    public CameraMode cameraMode;
+
+    void Start()
+    {
+        pauseResume(); 
+    }
 
 
     public void pauseResume()
     {
         Time.timeScale = 0;
-        Application.LoadLevelAdditive(1);
+        Application.LoadLevelAdditive(1); // 1 is menu in the build settings
     }
 
     public void switchCamera()

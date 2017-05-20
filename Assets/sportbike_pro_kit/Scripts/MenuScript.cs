@@ -3,10 +3,15 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class startScript : MonoBehaviour {
+public class MenuScript : MonoBehaviour {
     
     private Texture2D tex;
     private Texture2D texAlpha;
+
+    // Get the game controls objects
+    private GameObject ctrlHub;
+    private controlHub outsideControls;
+    private readonly string[] CONTROL_MODE = { "keyboard only", "use body tilt", "use hand tilt" };
 
     void OnGUI ()
 	{
@@ -35,16 +40,18 @@ public class startScript : MonoBehaviour {
             && Input.mousePosition.y < Screen.height - 350 && Input.mousePosition.y > Screen.height - 350 - 40 ? tex : texAlpha; 
         if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start / Resume", mediumText))
         {
-            Time.timeScale = 1;
-            Destroy(gameObject) ;
+            resume(); 
         }
 
         // One other item
         mediumText.normal.background = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
             && Input.mousePosition.y < Screen.height - 400 && Input.mousePosition.y > Screen.height - 400 - 40 ? tex : texAlpha;
-        if (GUI.Button(new Rect(Screen.width - 300, 400, 300, 40), "Other Items", mediumText))
+        if (GUI.Button(new Rect(Screen.width - 300, 400, 300, 40), CONTROL_MODE[(int)outsideControls.contolMode], mediumText))
         {
             // Ready to add new menu option
+
+            print(outsideControls);
+            outsideControls.nextControlMode(); 
         }
 
         // Exit item
@@ -66,6 +73,13 @@ public class startScript : MonoBehaviour {
         tex.Apply();
         texAlpha.SetPixel(0, 0, new Color(186.0f / 255, 119.0f / 255, 42.0f / 255, 0.0f));
         texAlpha.Apply();
+
+
+        // Get the controlhub from the main scene. 
+        ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
+        outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
+
+
     }
 
     // Update is called once per frame
@@ -73,11 +87,15 @@ public class startScript : MonoBehaviour {
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Time.timeScale = 1;
-            Destroy(gameObject);
+            resume(); 
         }
+    }
 
-
-
+    // Resume the game by destroying the menu 
+    // and setting the speed to normal speed
+    private void resume()
+    {
+        Time.timeScale = 1;
+        Destroy(gameObject);
     }
 }
