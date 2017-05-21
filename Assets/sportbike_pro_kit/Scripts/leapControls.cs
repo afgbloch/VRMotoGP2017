@@ -32,7 +32,13 @@ public class leapControls : MonoBehaviour {
     Vector2 oldV;
     Vector oldMenuVector = new Vector();
     controlHub.ControlMode oldMode;
+    bool camInit = false;
 
+    class Hands
+    {
+        public Hand left { get; set; }
+        public Hand right { get; set; }
+    }
 
     // Use this for initialization
     void Start () {
@@ -55,7 +61,6 @@ public class leapControls : MonoBehaviour {
         FitPlaneIntoFOV(wc.imgPlane);
 
         cascade = CvHaarClassifierCascade.FromFile("Assets/HeadTracking/haarcascade_frontalface_alt.xml");
-
     }
 
     void checkMode()
@@ -71,6 +76,36 @@ public class leapControls : MonoBehaviour {
             oldMode = outsideControls.controlMode;
         }
     }
+
+    // detect hands and labell them with left/right
+    bool handLabelling(ref Hands hands, ref HandList handList)
+    {
+        if (handList.Count > 0)
+        {
+            if (handList[0].IsLeft)
+            {
+                hands.left = handList[0];
+            }
+            else
+            {
+                hands.right = handList[0];
+            }
+        }
+
+        if (handList.Count > 1)
+        {
+            if (handList[1].IsLeft)
+            {
+                hands.left = handList[1];
+            }
+            else
+            {
+                hands.right = handList[1];
+            }
+        }
+
+        return hands.left != null && hands.right != null;
+    }
     
     // Update is called once per frame
     void Update () {
@@ -79,44 +114,17 @@ public class leapControls : MonoBehaviour {
 
         if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
             Frame frame = leapController.Frame();
-            HandList hands = frame.Hands;
-            Hand left = null, right = null;
+            HandList handList = frame.Hands;
+            Hands hands = new Hands();
             bool valid = false;
             float speed = 0;
+            
+            valid = handLabelling(ref hands, ref handList);
 
-            if (hands.Count > 0)
-            {
-                if (hands[0].IsLeft)
-                {
-                    left = hands[0];
-                }
-                else
-                {
-                    right = hands[0];
-                }
-            }
-
-            if (hands.Count > 1)
-            {
-                if (hands[1].IsLeft)
-                {
-                    left = hands[1];
-                }
-                else
-                {
-                    right = hands[1];
-                }
-            }
-
-            if(left != null && right != null)
-            {
-                valid = true;
-            }
-
-            if (right != null && outsideControls.menuOn)
+            if (hands.right != null && outsideControls.menuOn)
             {
 
-                Vector menuV = right.PalmPosition;
+                Vector menuV = hands.right.PalmPosition;
 
                 outsideControls.menuStartStop = menuV.y >= 150;
                 outsideControls.menuMode = 75 < menuV.y && menuV.y < 150;
@@ -133,21 +141,21 @@ public class leapControls : MonoBehaviour {
 
             if (valid) {
 
-                speed -= left.GrabStrength;
+                speed -= hands.left.GrabStrength;
 
-                if (!init && right.GrabStrength == 1) {
+                if (!init && hands.right.GrabStrength == 1) {
                     print("---- INIT -----");
                     first = frame;
                     init = true;
                 }
 
-                if (init && right.GrabStrength == 0) {
+                if (init && hands.right.GrabStrength == 0) {
                     init = false;
                 }
 
 
-                if (init && right.GrabStrength == 1) {
-                    speed += right.RotationAngle(first);
+                if (init && hands.right.GrabStrength == 1) {
+                    speed += hands.right.RotationAngle(first);
                 }
 
                 speed = speed / 2.0f;
@@ -161,8 +169,8 @@ public class leapControls : MonoBehaviour {
                 }
 
                 if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
-                    Vector leftV = left.PalmPosition;
-                    Vector rightV = right.PalmPosition;
+                    Vector leftV = hands.left.PalmPosition;
+                    Vector rightV = hands.right.PalmPosition;
                     float tilt = (rightV.z - leftV.z) / 300.0f;
 
                     if (tilt > 0.9f)
@@ -179,7 +187,7 @@ public class leapControls : MonoBehaviour {
                     }
                 }
 
-                if(left.PalmNormal.y > 0.9 && right.PalmNormal.y > 0.9 && !outsideControls.menuOn)
+                if(hands.left.PalmNormal.y > 0.9 && hands.right.PalmNormal.y > 0.9 && !outsideControls.menuOn)
                 {
                     outsideControls.pauseResume();
                 }
@@ -198,17 +206,18 @@ public class leapControls : MonoBehaviour {
 
         if (HaarClassCascade(ref cvHeadPos)) {
 
-            float faceAng = AngularSize.GetAngSize(wcImgPlaneDist, knownFaceSize);
-            float faceHeightRatio = faceAng / camUnity.fieldOfView;
-            cvHeadPos.z = ((faceHeightRatio * (float)ocv.cvMat.Height) /
-                          (float)cvHeadPos.z) * wcImgPlaneDist;
+            cvHeadPos.z = wcImgPlaneDist;
             cvHeadPos = CvMat2ScreenCoord(cvHeadPos);
             cvHeadPos = camUnity.ScreenToWorldPoint(cvHeadPos);
 
             // the tracking is noisy, thus we only consider the new reading if it  
             // lands less than .4 meters away from the last smoothed position
-            if ((cvHeadPos - priorPos).magnitude < 0.4f)
+            if ((cvHeadPos - priorPos).magnitude < 0.4f || !camInit)
+            {
                 priorPos = cvHeadPos;
+                camInit = true;
+            }
+                
         }
 
         // update the smoothing / prediction model
@@ -275,7 +284,6 @@ public class leapControls : MonoBehaviour {
         cvPos.x = ((float)camUnity.pixelWidth / (float)ocv.cvMat.Width) * cvPos.x;
         // swap the y coordinate origin and +y direction 
         cvPos.y = ((float)camUnity.pixelHeight / (float)ocv.cvMat.Height) * (ocv.cvMat.Height - cvPos.y);
-
         return cvPos;
     }
 
