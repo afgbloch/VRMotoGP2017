@@ -40,6 +40,7 @@ public class MenuScript : MonoBehaviour {
         
         if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start / Resume", mediumText) || (outsideControls.menuStartStop && outsideControls.menuClick))
         {
+            outsideControls.menuClick = false;
             resume();
         }
 
@@ -48,9 +49,8 @@ public class MenuScript : MonoBehaviour {
 
         if (GUI.Button(new Rect(Screen.width - 300, 400, 300, 40), CONTROL_MODE[(int)outsideControls.controlMode], mediumText) || (outsideControls.menuMode && outsideControls.menuClick))
         {
+            outsideControls.menuClick = false;
             // Ready to add new menu option
-
-            print(outsideControls);
             outsideControls.nextControlMode(); 
         }
 
@@ -59,6 +59,7 @@ public class MenuScript : MonoBehaviour {
         
         if (GUI.Button(new Rect(Screen.width - 300, 450, 300, 40), "Exit", mediumText) || (outsideControls.menuExit && outsideControls.menuClick))
         {
+            outsideControls.menuClick = false;
             Application.Quit();
         }
     }

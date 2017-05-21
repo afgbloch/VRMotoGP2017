@@ -87,6 +87,8 @@ public class keyboardControls : MonoBehaviour {
             outsideControls.CamX = Input.GetAxis("Mouse X");
             outsideControls.CamY = Input.GetAxis("Mouse Y");
 
+            outsideControls.menuClick = false;
+
             outsideControls.menuStartStop = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
                 && Input.mousePosition.y < Screen.height - 350 && Input.mousePosition.y > Screen.height - 350 - 40;
 
