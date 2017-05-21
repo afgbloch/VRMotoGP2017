@@ -67,16 +67,34 @@ public class leapControls : MonoBehaviour {
     // init field after change of mode
     void checkMode()
     {
-        //if(outsideControls.controlMode != oldMode)
-        //{
-            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT && outsideControls.camVrView == false)
+        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT && outsideControls.camVrView == false)
+        {
+            outsideControls.camSpeed = 500.0f;
+            outsideControls.camVrView = true;
+        }
+    }
+
+    void menuGestures(ref Hands hands)
+    {
+        if (hands.right != null && outsideControls.menuOn)
+        {
+            Vector menuV = hands.right.PalmPosition;
+
+            outsideControls.menuStartStop = menuV.y >= 230;
+            outsideControls.menuFullRestart = 190 < menuV.y && menuV.y < 230;
+            outsideControls.menuMode = 150 < menuV.y && menuV.y <= 190;
+            outsideControls.menuView = 110 < menuV.y && menuV.y <= 150;
+            outsideControls.menuHelp = 70 < menuV.y && menuV.y <= 110;
+            outsideControls.menuExit = menuV.y <= 70;
+
+            float delta = oldMenuVector.z - menuV.z;
+            if (delta > 45)
             {
-                outsideControls.camSpeed = 500.0f;
-                outsideControls.camVrView = true;
+                outsideControls.menuClick = true;
             }
 
-        //    oldMode = outsideControls.controlMode;
-        //}
+            oldMenuVector = menuV;
+        }
     }
 
     // detect hands and labell them with left/right
@@ -123,26 +141,7 @@ public class leapControls : MonoBehaviour {
             
             valid = handLabelling(ref hands, ref handList);
 
-            if (hands.right != null && outsideControls.menuOn)
-            {
-
-                Vector menuV = hands.right.PalmPosition;
-
-                outsideControls.menuStartStop = menuV.y >= 230;
-                outsideControls.menuFullRestart = 190 < menuV.y && menuV.y < 230;
-                outsideControls.menuMode = 150 < menuV.y && menuV.y <= 190;
-                outsideControls.menuView = 110 < menuV.y && menuV.y <= 150;
-                outsideControls.menuHelp = 70 < menuV.y && menuV.y <= 110;
-                outsideControls.menuExit = menuV.y <= 70;
-
-                float delta = oldMenuVector.z - menuV.z;
-                if (delta > 45)
-                {
-                    outsideControls.menuClick = true;
-                }
-                
-                oldMenuVector = menuV;
-            }
+            menuGestures(ref hands);
 
             if (valid) {
 
@@ -251,8 +250,8 @@ public class leapControls : MonoBehaviour {
         if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
             float deltaX = v.x - oldV.x;
             float deltaY = v.y - oldV.y;
-            outsideControls.CamX = (-0.005 < deltaX && deltaX < 0.005)? 0 : deltaX;
-            outsideControls.CamY = (-0.005 < deltaY && deltaY < 0.005)? 0 : deltaY;
+            outsideControls.CamX = (-0.0005 < deltaX && deltaX < 0.0005)? 0 : deltaX;
+            outsideControls.CamY = (-0.0005 < deltaY && deltaY < 0.0005)? 0 : deltaY;
             oldV = v;
         }
     }
