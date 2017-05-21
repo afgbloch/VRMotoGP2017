@@ -5,9 +5,11 @@ using OpenCvSharp;
 
 public class leapControls : MonoBehaviour {
 
-	private GameObject ctrlHub;// making a link to corresponding bike's script
-	private controlHub outsideControls;// making a link to corresponding bike's script
-	Controller controller;
+    // Links to corresponding bike's script
+    private GameObject ctrlHub;
+    private controlHub outsideControls;
+
+	Controller leapController = new Controller();
 	Frame first;
 	bool init = false;
     // webcam video
@@ -26,8 +28,6 @@ public class leapControls : MonoBehaviour {
     float knownFaceSize = 0.15f;
     Vector3 priorPos = new Vector3();
     public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
-    // object to be controlled with head position
-    public Transform controlledTr;
     Vector2 oldV;
     Vector oldMenuVector = new Vector();
 
@@ -35,11 +35,6 @@ public class leapControls : MonoBehaviour {
     void Start () {
 		ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
 		outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
-
-		outsideControls.cameraMode = controlHub.CameraMode.FIRST_PERSON;
-		outsideControls.help = false; 
-	
-		controller = new Controller ();
 
         // init webcam capture and render to plane
         if (wc.InitWebcam()) {
@@ -59,10 +54,7 @@ public class leapControls : MonoBehaviour {
 
         cascade = CvHaarClassifierCascade.FromFile("Assets/HeadTracking/haarcascade_frontalface_alt.xml");
 
-        // scale controlled object to match face size
-        controlledTr.localScale = knownFaceSize * Vector3.one;
-
-        if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
+        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
             outsideControls.camSpeed = 500.0f;
             outsideControls.camVrView = true;
         }
@@ -73,7 +65,7 @@ public class leapControls : MonoBehaviour {
     void Update () {
 
         if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
-            Frame frame = controller.Frame();
+            Frame frame = leapController.Frame();
             HandList hands = frame.Hands;
             Hand left = null, right = null;
             bool valid = false;
@@ -118,7 +110,6 @@ public class leapControls : MonoBehaviour {
                 outsideControls.menuMode = 75 < menuV.y && menuV.y < 150;
                 outsideControls.menuExit = menuV.y <= 75;
 
-
                 float delta = oldMenuVector.z - menuV.z;
                 if (delta > 45)
                 {
@@ -162,8 +153,6 @@ public class leapControls : MonoBehaviour {
                     Vector rightV = right.PalmPosition;
                     float tilt = (rightV.z - leftV.z) / 300.0f;
 
-                    //print("Tilt:" + tilt + " lz:" + leftV.z + " rz:" + rightV.z);
-
                     if (tilt > 0.9f)
                     {
                         outsideControls.Horizontal = 0.9f;
@@ -186,13 +175,13 @@ public class leapControls : MonoBehaviour {
                 init = false;
             }
 
-            ocv.UpdateOCVMat();
-            TrackHead3DSmooth();
+            TrackHead();
         }
     }
 
-    void TrackHead3DSmooth() {
+    void TrackHead() {
 
+        ocv.UpdateOCVMat();
         Vector3 cvHeadPos = new Vector3();
 
         if (HaarClassCascade(ref cvHeadPos)) {
