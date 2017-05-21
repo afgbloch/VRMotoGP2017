@@ -160,7 +160,7 @@ public class leapControls : MonoBehaviour {
                     }
                 }
 
-                if(left.PalmNormal.y > 0.9 && right.PalmNormal.y > 0.9)
+                if(left.PalmNormal.y > 0.9 && right.PalmNormal.y > 0.9 && !outsideControls.menuOn)
                 {
                     outsideControls.pauseResume();
                 }
