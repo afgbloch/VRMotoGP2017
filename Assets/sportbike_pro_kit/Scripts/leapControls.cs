@@ -10,6 +10,7 @@ public class leapControls : MonoBehaviour {
     private controlHub outsideControls;
 
 	Controller leapController = new Controller();
+
 	Frame first;
 	bool init = false;
     // webcam video
@@ -30,6 +31,8 @@ public class leapControls : MonoBehaviour {
     public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
     Vector2 oldV;
     Vector oldMenuVector = new Vector();
+    controlHub.ControlMode oldMode;
+
 
     // Use this for initialization
     void Start () {
@@ -51,18 +54,28 @@ public class leapControls : MonoBehaviour {
         camUnity.fieldOfView = wc.camFOV;
         FitPlaneIntoFOV(wc.imgPlane);
 
-
         cascade = CvHaarClassifierCascade.FromFile("Assets/HeadTracking/haarcascade_frontalface_alt.xml");
 
-        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
-            outsideControls.camSpeed = 500.0f;
-            outsideControls.camVrView = true;
-        }
+    }
 
+    void checkMode()
+    {
+        if(outsideControls.controlMode != oldMode)
+        {
+            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
+            {
+                outsideControls.camSpeed = 500.0f;
+                outsideControls.camVrView = true;
+            }
+
+            oldMode = outsideControls.controlMode;
+        }
     }
     
     // Update is called once per frame
     void Update () {
+
+        checkMode();
 
         if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
             Frame frame = leapController.Frame();
