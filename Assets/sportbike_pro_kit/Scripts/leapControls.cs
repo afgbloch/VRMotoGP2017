@@ -126,9 +126,12 @@ public class leapControls : MonoBehaviour {
 
                 Vector menuV = hands.right.PalmPosition;
 
-                outsideControls.menuStartStop = menuV.y >= 150;
-                outsideControls.menuMode = 75 < menuV.y && menuV.y < 150;
-                outsideControls.menuExit = menuV.y <= 75;
+                outsideControls.menuStartStop = menuV.y >= 180;
+                outsideControls.menuFullRestart = 150 < menuV.y && menuV.y < 180;
+                outsideControls.menuMode = 120 < menuV.y && menuV.y <= 150;
+                outsideControls.menuView = 60 < menuV.y && menuV.y <= 90;
+                outsideControls.menuHelp = 30 < menuV.y && menuV.y <= 60;
+                outsideControls.menuExit = menuV.y <= 30;
 
                 float delta = oldMenuVector.z - menuV.z;
                 if (delta > 45)
