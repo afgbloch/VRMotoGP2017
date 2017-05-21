@@ -156,7 +156,6 @@ public class leapControls : MonoBehaviour {
                     init = false;
                 }
 
-
                 if (init && hands.right.GrabStrength == 1) {
                     speed += hands.right.RotationAngle(first);
                 }
@@ -247,8 +246,10 @@ public class leapControls : MonoBehaviour {
         }
 
         if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
-            outsideControls.CamX = v.x - oldV.x;
-            outsideControls.CamY = v.y - oldV.y;
+            float deltaX = v.x - oldV.x;
+            float deltaY = v.y - oldV.y;
+            outsideControls.CamX = (-0.005 < deltaX && deltaX < 0.005)? 0 : deltaX;
+            outsideControls.CamY = (-0.005 < deltaY && deltaY < 0.005)? 0 : deltaY;
             oldV = v;
         }
     }
