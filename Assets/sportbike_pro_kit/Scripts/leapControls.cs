@@ -25,8 +25,6 @@ public class leapControls : MonoBehaviour {
     public Camera camUnity;
     // distance between camUnity and webcam imgPlane
     float wcImgPlaneDist = 1.0f;
-    // approx. size of a face
-    float knownFaceSize = 0.15f;
     Vector3 priorPos = new Vector3();
     public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
     Vector2 oldV;
@@ -34,6 +32,7 @@ public class leapControls : MonoBehaviour {
     controlHub.ControlMode oldMode;
     bool camInit = false;
 
+    // represent pair or hands
     class Hands
     {
         public Hand left { get; set; }
@@ -74,6 +73,7 @@ public class leapControls : MonoBehaviour {
         }
     }
 
+    // apply leap motion effect on the menu
     void menuGestures(ref Hands hands)
     {
         if (hands.right != null && outsideControls.menuOn)
@@ -126,6 +126,101 @@ public class leapControls : MonoBehaviour {
 
         return hands.left != null && hands.right != null;
     }
+
+    // apply leap motion tracking effect on the game
+    void gameGesture(ref Hands hands, ref Frame frame)
+    {
+        float speed = hands.left.GrabStrength / 10.0f;
+
+        if (!init && hands.right.GrabStrength == 1)
+        {
+            print("---- INIT -----");
+            first = frame;
+            init = true;
+            outsideControls.camVrView = false;
+        }
+
+        if (init && hands.right.GrabStrength == 0)
+        {
+            init = false;
+        }
+
+        if (init && hands.right.GrabStrength == 1)
+        {
+            speed += hands.right.RotationAngle(first);
+        }
+
+        speed = speed / 2.0f;
+        if (speed > 0.9f)
+        {
+            outsideControls.Vertical = 0.9f;
+        }
+        else if (speed < -0.9f)
+        {
+            outsideControls.Vertical = -0.9f;
+        }
+        else
+        {
+            outsideControls.Vertical = speed;
+        }
+
+        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
+        {
+            Vector leftV = hands.left.PalmPosition;
+            Vector rightV = hands.right.PalmPosition;
+            float tilt = (rightV.z - leftV.z) / 200.0f;
+
+            if (tilt > 0.9f)
+            {
+                outsideControls.Horizontal = 0.9f;
+            }
+            else if (tilt < -0.9f)
+            {
+                outsideControls.Horizontal = -0.9f;
+            }
+            else
+            {
+                outsideControls.Horizontal = tilt;
+            }
+        }
+
+        // launch menu
+        if (hands.left.PalmNormal.y > 0.9 && hands.right.PalmNormal.y > 0.9 && !outsideControls.menuOn)
+        {
+            outsideControls.pauseResume();
+        }
+    }
+
+    // apply the tracking vector effect on the game
+    void gameTracking(ref Vector3 v)
+    {
+        if (outsideControls.controlMode == controlHub.ControlMode.BODY_TILT)
+        {
+            float tilt = v.x * 3;
+
+            if (tilt > 0.9f)
+            {
+                outsideControls.Horizontal = 0.9f;
+            }
+            else if (tilt < -0.9f)
+            {
+                outsideControls.Horizontal = -0.9f;
+            }
+            else
+            {
+                outsideControls.Horizontal = tilt;
+            }
+        }
+
+        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
+        {
+            float deltaX = v.x - oldV.x;
+            float deltaY = v.y - oldV.y;
+            outsideControls.CamX = (-0.0005 < deltaX && deltaX < 0.0005) ? 0 : deltaX;
+            outsideControls.CamY = (-0.0005 < deltaY && deltaY < 0.0005) ? 0 : deltaY;
+            oldV = v;
+        }
+    }
     
     // Update is called once per frame
     void Update () {
@@ -137,101 +232,25 @@ public class leapControls : MonoBehaviour {
             HandList handList = frame.Hands;
             Hands hands = new Hands();
             bool valid = false;
-            float speed = 0;
             
             valid = handLabelling(ref hands, ref handList);
 
             menuGestures(ref hands);
 
-            if (valid) {
-
-                speed -= hands.left.GrabStrength / 10.0f;
-
-                if (!init && hands.right.GrabStrength == 1) {
-                    print("---- INIT -----");
-                    first = frame;
-                    init = true;
-                    outsideControls.camVrView = false;
-                }
-
-                if (init && hands.right.GrabStrength == 0) {
-                    init = false;
-                }
-
-                if (init && hands.right.GrabStrength == 1) {
-                    speed += hands.right.RotationAngle(first);
-                }
-
-                speed = speed / 2.0f;
-
-                if (speed > 0.9f) {
-                    outsideControls.Vertical = 0.9f;
-                } else if (speed < -0.9f) {
-                    outsideControls.Vertical = -0.9f;
-                } else {
-                    outsideControls.Vertical = speed;
-                }
-
-                if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
-                    Vector leftV = hands.left.PalmPosition;
-                    Vector rightV = hands.right.PalmPosition;
-                    float tilt = (rightV.z - leftV.z) / 200.0f;
-
-                    if (tilt > 0.9f)
-                    {
-                        outsideControls.Horizontal = 0.9f;
-                    }
-                    else if (tilt < -0.9f)
-                    {
-                        outsideControls.Horizontal = -0.9f;
-                    }
-                    else
-                    {
-                        outsideControls.Horizontal = tilt;
-                    }
-                }
-
-                if(hands.left.PalmNormal.y > 0.9 && hands.right.PalmNormal.y > 0.9 && !outsideControls.menuOn)
-                {
-                    outsideControls.pauseResume();
-                }
+            if (valid)
+            {
+                gameGesture(ref hands, ref frame);
             } else {
                 outsideControls.Vertical = 0;
                 init = false;
             }
 
-
             Vector3 v = TrackHead();
-
-            if (outsideControls.controlMode == controlHub.ControlMode.BODY_TILT)
-            {
-                float tilt = v.x * 3;
-
-                if (tilt > 0.9f)
-                {
-                    outsideControls.Horizontal = 0.9f;
-                }
-                else if (tilt < -0.9f)
-                {
-                    outsideControls.Horizontal = -0.9f;
-                }
-                else
-                {
-                    outsideControls.Horizontal = tilt;
-                }
-            }
-
-            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
-            {
-                float deltaX = v.x - oldV.x;
-                float deltaY = v.y - oldV.y;
-                outsideControls.CamX = (-0.0005 < deltaX && deltaX < 0.0005) ? 0 : deltaX;
-                outsideControls.CamY = (-0.0005 < deltaY && deltaY < 0.0005) ? 0 : deltaY;
-                oldV = v;
-            }
+            gameTracking(ref v);
         }
     }
 
+    // get vector from head tracking
     Vector3 TrackHead() {
 
         ocv.UpdateOCVMat();
@@ -243,8 +262,7 @@ public class leapControls : MonoBehaviour {
             cvHeadPos = CvMat2ScreenCoord(cvHeadPos);
             cvHeadPos = camUnity.ScreenToWorldPoint(cvHeadPos);
 
-            // the tracking is noisy, thus we only consider the new reading if it  
-            // lands less than .4 meters away from the last smoothed position
+            // only small delta to avoid noise
             if ((cvHeadPos - priorPos).magnitude < 0.4f || !camInit)
             {
                 priorPos = cvHeadPos;
