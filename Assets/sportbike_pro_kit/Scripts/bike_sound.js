@@ -58,7 +58,7 @@ function Update(){
 	highRPMAudio.volume = Mathf.Abs(linkToBike.EngineRPM  / linkToBike.MaxEngineRPM);
 
 	// all engine sounds stop when restart
-	if (outsideControls.restartBike){
+	if (outsideControls.fullRestartBike){
 		GetComponent.<AudioSource>().Stop();
 		GetComponent.<AudioSource>().pitch = 1.0;
 		GetComponent.<AudioSource>().PlayOneShot(engineStartSound);

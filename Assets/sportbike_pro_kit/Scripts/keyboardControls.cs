@@ -12,17 +12,23 @@ public class keyboardControls : MonoBehaviour {
 	void Start () {
 		ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
 		outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
-
-        outsideControls.cameraMode = controlHub.CameraMode.FIRST_PERSON;
-        outsideControls.help = false; 
     }
 	
 	// Update is called once per frame
 	void Update () {
 
+        // Open menu
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            outsideControls.pauseResume();
+            if(!outsideControls.menuOn)
+                outsideControls.pauseResume();
+        }
+
+   
+        // full restart
+        if (Input.GetKey(KeyCode.R))
+        {
+            outsideControls.fullRestartBike = true;
         }
         
 
@@ -34,12 +40,35 @@ public class keyboardControls : MonoBehaviour {
         }
 
 
-        /////////////////////////////// ACCELERATE, braking, turning //////////////////////////////
-        //to get less than 0.9 as acceleration to prevent wheelie(wheelie begins at >0.9)
+        // Change the view Mode
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            outsideControls.switchCamera();
+        }
+
+
+        // Display help
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            outsideControls.help = !outsideControls.help;
+        }
+
+
+        //////////////////////// Activate or desactivate Reverse gear//////////////////////////////
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            outsideControls.reverse = !outsideControls.reverse;
+        }
+
+
+
         if (outsideControls.controlMode == controlHub.ControlMode.KEYBOARD_ONLY)
         {
+
+            /////////////////////////////// ACCELERATE, braking, turning //////////////////////////////
+            //to get less than 0.9 as acceleration to amelioate control of the bike
             outsideControls.Vertical = Input.GetAxis("Vertical") / 1.112f;
-            
+
             if (Input.GetAxis("Vertical") < 0)
             {
                 //need to get 1(full power) for front brake
@@ -47,57 +76,39 @@ public class keyboardControls : MonoBehaviour {
             }
 
             outsideControls.Horizontal = Input.GetAxis("Horizontal");
-        }
-        
 
 
-        /////////////////////////////////// Restart ////////////////////////////////////////////////
-        // Restart & full restart
-        if (Input.GetKey (KeyCode.R)) {
-			outsideControls.restartBike = true;
-		} else
-			outsideControls.restartBike = false;
-
-		// RightShift for full restart
-		if (Input.GetKey (KeyCode.RightShift)) {
-			outsideControls.fullRestartBike = true;
-		} else
-			outsideControls.fullRestartBike = false;
-
-		////////////////////////////////// Reverse //////////////////////////////////////////////////
-		if(Input.GetKeyDown(KeyCode.C)){
-				outsideControls.reverse = !outsideControls.reverse;
-		} 
-
-        /////////////////////////////////// Help ////////////////////////////////////////////////////
-        if (Input.GetKeyDown(KeyCode.H))
-        {
-            outsideControls.help = !outsideControls.help;
-        }
-
-        /////////////////////////////////// Change View //////////////////////////////////////////////
-        if (Input.GetKeyDown(KeyCode.V))
-        {
-            outsideControls.switchCamera(); 
-        }
-
-        if (outsideControls.controlMode == controlHub.ControlMode.KEYBOARD_ONLY)
-        {
+            //Camera point of view and menu control with the mouse
             outsideControls.camVrView = Input.GetMouseButton(1);
             outsideControls.CamX = Input.GetAxis("Mouse X");
             outsideControls.CamY = Input.GetAxis("Mouse Y");
 
             outsideControls.menuClick = false;
 
-            outsideControls.menuStartStop = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
-                && Input.mousePosition.y < Screen.height - 350 && Input.mousePosition.y > Screen.height - 350 - 40;
+            if (outsideControls.menuOn)
+            {
+                outsideControls.menuStartStop = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                    && Input.mousePosition.y < 350 && Input.mousePosition.y > 350 - 40;
 
-            outsideControls.menuMode = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
-                && Input.mousePosition.y < Screen.height - 400 && Input.mousePosition.y > Screen.height - 400 - 40;
 
-            outsideControls.menuExit = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
-                && Input.mousePosition.y < Screen.height - 450 && Input.mousePosition.y > Screen.height - 450 - 40;            
+                outsideControls.menuFullRestart = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                    && Input.mousePosition.y < 300 && Input.mousePosition.y > 300 - 40;
+
+
+                outsideControls.menuMode = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                    && Input.mousePosition.y < 250 && Input.mousePosition.y > 250 - 40;
+
+
+                outsideControls.menuView = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                    && Input.mousePosition.y < 200 && Input.mousePosition.y > 200 - 40;
+
+
+                outsideControls.menuHelp = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                    && Input.mousePosition.y < 150 && Input.mousePosition.y > 150 - 40;
+
+                outsideControls.menuExit = Input.mousePosition.x > Screen.width - 300 && Input.mousePosition.x < Screen.width
+                    && Input.mousePosition.y < 100 && Input.mousePosition.y > 100 - 40;
+            }
         }
-
     }
 }

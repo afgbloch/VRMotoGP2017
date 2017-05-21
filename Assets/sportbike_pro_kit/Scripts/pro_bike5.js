@@ -97,7 +97,7 @@ var initialRotation : Quaternion;
 /////////////////////////////////////////  ON SCREEN INFO /////////////////////////////////////////
 function OnGUI ()
 {
-	if(GameObject.Find("menuCamera") == null){
+	if(GameObject.Find("menuCamera") == null || outsideControls.help){
 		//Prepare Styles for different Label size
 		var biggerText = new GUIStyle("label");
   		biggerText.fontSize = 40;
@@ -108,24 +108,61 @@ function OnGUI ()
   	
   		//to show in on display interface: speed, gear and RPM
 	
-		GUI.color = Color.black;
-		GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
-		GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
+		if(GameObject.Find("menuCamera") == null){
+
+			GUI.color = Color.black;
+			GUI.Label(Rect(Screen.width*0.875,Screen.height*0.9, 120, 80), String.Format(""+ "{0:0.}", bikeSpeed), biggerText);
+			GUI.Label (Rect (Screen.width*0.76,Screen.height*0.88, 60, 80), "" + (CurrentGear+1),biggerText);
     
-		if (!isReverseOn){
 			GUI.color = Color.grey;
-			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
-		} else {
-			GUI.color = Color.red;
-			GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
+			GUI.Label (Rect (Screen.width-200, 10, 250, 40), ""+ outsideControls.CONTROL_MODE[outsideControls.controlMode], middleText);
+    
+			if (!isReverseOn){
+				GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
+			} else {
+				GUI.color = Color.red;
+				GUI.Label (Rect (Screen.width*0.885, Screen.height*0.96,60,40), "REAR", smallerText);
+				GUI.color = Color.grey;
+			}
 		}
-	
+		else{
+			GUI.color = Color.white;
+		}
+		
 		// user info help box lines
 		if(outsideControls.help){
-			GUI.color = Color.white;
-			GUI.Box (Rect (10,10,180,20), "arrows - main control", smallerText);
-			// TODO Add more ?
-			GUI.color = Color.black; 
+
+
+			if (outsideControls.controlMode == controlHub.ControlMode.KEYBOARD_ONLY){
+			
+				GUI.Box (Rect (10,10,180,20), "UP - Accelerate", smallerText);
+				GUI.Box (Rect (10,30,180,20), "DOWN - Break", smallerText);
+				GUI.Box (Rect (10,50,180,20), "LEFT / RIGHT - Turn", smallerText);
+				GUI.Box (Rect (10,70,180,20), "R - Full Restart", smallerText);
+				GUI.Box (Rect (10,90,180,20), "M - Change Control Mode", smallerText);
+				GUI.Box (Rect (10,110,180,20), "V - Change V Mode", smallerText);
+				GUI.Box (Rect (10,130,180,20), "C - Rear Gear ON/OFF", smallerText);
+				GUI.Box (Rect (10,150,180,20), "RMB - Change point of view", smallerText);
+			}
+			else if (outsideControls.controlMode == controlHub.ControlMode.BODY_TILT){
+				GUI.Box (Rect (10,10,180,20), "RH - Accelerate", smallerText);
+				GUI.Box (Rect (10,30,180,20), "LH - Break", smallerText);
+				GUI.Box (Rect (10,50,180,20), "Body Tilt - Turn", smallerText);
+				GUI.Box (Rect (10,70,180,20), "R - Full Restart", smallerText);
+				GUI.Box (Rect (10,90,180,20), "M - Change Control Mode", smallerText);
+				GUI.Box (Rect (10,110,180,20), "V - Change V Mode", smallerText);
+				GUI.Box (Rect (10,130,180,20), "C - Rear Gear ON/OFF", smallerText);
+			}
+			else if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT){
+				GUI.Box (Rect (10,10,180,20), "RH - Accelerate", smallerText);
+				GUI.Box (Rect (10,30,180,20), "LH - Break", smallerText);
+				GUI.Box (Rect (10,50,180,20), "Hand Tilt - Turn", smallerText);
+				GUI.Box (Rect (10,70,180,20), "R - Full Restart", smallerText);
+				GUI.Box (Rect (10,90,180,20), "M - Change Control Mode", smallerText);
+				GUI.Box (Rect (10,110,180,20), "V - Change V Mode", smallerText);
+				GUI.Box (Rect (10,130,180,20), "C - Rear Gear ON/OFF", smallerText);
+			}
+
 		}
 	}
 }
@@ -173,7 +210,7 @@ function Start () {
 	initialPosition = this.transform.position + Vector3(0,0.1,0); 
 	initialRotation =  this.transform.rotation; 
 
-	outsideControls.restartBike = true; 
+	outsideControls.fullRestartBike = true; 
 }
 
 
@@ -354,12 +391,6 @@ function FixedUpdate (){
 
 		this.transform.position = initialPosition; 
 		this.transform.rotation = initialRotation;  
-		print("FULL RESTART");
-		outsideControls.restartBike = true; 
-	}
-
-
-	if (outsideControls.restartBike){
 		
 		//transform.position+=Vector3(0,0.1,0);
 		transform.rotation=Quaternion.Euler( 0.0, transform.localEulerAngles.y, 0.0 );
@@ -374,6 +405,7 @@ function FixedUpdate (){
 		coll_rearWheel.motorTorque = 0;
 		coll_rearWheel.brakeTorque = 0;
 		GetComponent.<Rigidbody>().centerOfMass = Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+		outsideControls.fullRestartBike = false; 
 	}		
 }
 

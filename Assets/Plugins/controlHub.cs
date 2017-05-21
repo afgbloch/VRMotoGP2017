@@ -7,10 +7,15 @@ using System.Collections;
 
 public class controlHub : MonoBehaviour  {//need that for leap motion controls
 
+    public readonly string[] CONTROL_MODE = { "Mode: keyboard", "Mode: body tilt", "Mode: hand tilt" };
+    public readonly string[] VIEW_MODE = { "First Person", "Third Person" };
+    public readonly string[] HELP_MODE = { "Help: OFF", "Help: ON" };
+
     public enum CameraMode { FIRST_PERSON = 0, THIRD_PERSON };
     public enum ControlMode {KEYBOARD_ONLY=0,  BODY_TILT, HAND_TILT}
 
     public ControlMode controlMode = ControlMode.KEYBOARD_ONLY; // tell if we use keyboard instead of VR controls (webcam and leapmotion)
+    public CameraMode cameraMode = CameraMode.FIRST_PERSON;
 
     public float Vertical = -1;//variable translated to bike script for bike accelerate/stop and leaning
 	public float Horizontal;//variable translated to bike script for pilot's mass shift
@@ -21,18 +26,20 @@ public class controlHub : MonoBehaviour  {//need that for leap motion controls
     public bool camVrView;
 
     public bool menuStartStop;
+    public bool menuFullRestart;
     public bool menuMode;
+    public bool menuView;
+    public bool menuHelp;
     public bool menuExit;
     public bool menuClick;
 
-    public bool restartBike;//this variable says to bike's script restart
+    
 	public bool fullRestartBike; //this variable says to bike's script to full restart
     
-	public bool reverse;//for reverse speed
+	public bool reverse = false;//for reverse speed
 
-    public bool help; 
+    public bool help = false; 
 
-    public CameraMode cameraMode;
 
     public bool menuOn = false;
 
