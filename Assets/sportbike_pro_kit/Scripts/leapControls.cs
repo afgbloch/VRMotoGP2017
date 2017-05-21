@@ -82,7 +82,6 @@ public class leapControls : MonoBehaviour {
             HandList hands = frame.Hands;
             Hand left = null, right = null;
             bool valid = false;
-            outsideControls.restartBike = false;
             float speed = 0;
 
             if (hands.Count > 0)
@@ -117,7 +116,7 @@ public class leapControls : MonoBehaviour {
             if (right != null && outsideControls.menuOn)
             {
 
-                Vector menuV = hands[0].PalmPosition;
+                Vector menuV = right.PalmPosition;
 
                 outsideControls.menuStartStop = menuV.y >= 150;
                 outsideControls.menuMode = 75 < menuV.y && menuV.y < 150;
