@@ -144,7 +144,7 @@ public class leapControls : MonoBehaviour {
 
             if (valid) {
 
-                speed -= hands.left.GrabStrength / 4.0f;
+                speed -= hands.left.GrabStrength / 10.0f;
 
                 if (!init && hands.right.GrabStrength == 1) {
                     print("---- INIT -----");
