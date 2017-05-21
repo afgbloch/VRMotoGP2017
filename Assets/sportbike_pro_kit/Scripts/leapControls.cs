@@ -80,7 +80,36 @@ public class leapControls : MonoBehaviour {
             outsideControls.restartBike = false;
             float speed = 0;
 
-            if (hands.Count > 0 && hands[0].IsRight && outsideControls.menuOn)
+            if (hands.Count > 0)
+            {
+                if (hands[0].IsLeft)
+                {
+                    left = hands[0];
+                }
+                else
+                {
+                    right = hands[0];
+                }
+            }
+
+            if (hands.Count > 1)
+            {
+                if (hands[1].IsLeft)
+                {
+                    left = hands[1];
+                }
+                else
+                {
+                    right = hands[1];
+                }
+            }
+
+            if(left != null && right != null)
+            {
+                valid = true;
+            }
+
+            if (right != null && outsideControls.menuOn)
             {
 
                 Vector menuV = hands[0].PalmPosition;
@@ -97,17 +126,6 @@ public class leapControls : MonoBehaviour {
                 }
                 
                 oldMenuVector = menuV;
-            }
-
-            if (hands.Count == 2) {
-                if (hands[0].IsLeft) {
-                    left = hands[0];
-                    right = hands[1];
-                } else {
-                    left = hands[1];
-                    right = hands[0];
-                }
-                valid = true;
             }
 
             if (valid) {
