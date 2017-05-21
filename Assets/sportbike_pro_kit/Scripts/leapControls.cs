@@ -63,18 +63,20 @@ public class leapControls : MonoBehaviour {
         cascade = CvHaarClassifierCascade.FromFile("Assets/HeadTracking/haarcascade_frontalface_alt.xml");
     }
 
+
+    // init field after change of mode
     void checkMode()
     {
-        if(outsideControls.controlMode != oldMode)
-        {
-            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
+        //if(outsideControls.controlMode != oldMode)
+        //{
+            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT && outsideControls.camVrView == false)
             {
                 outsideControls.camSpeed = 500.0f;
                 outsideControls.camVrView = true;
             }
 
-            oldMode = outsideControls.controlMode;
-        }
+        //    oldMode = outsideControls.controlMode;
+        //}
     }
 
     // detect hands and labell them with left/right
@@ -150,6 +152,7 @@ public class leapControls : MonoBehaviour {
                     print("---- INIT -----");
                     first = frame;
                     init = true;
+                    outsideControls.camVrView = false;
                 }
 
                 if (init && hands.right.GrabStrength == 0) {
@@ -198,6 +201,7 @@ public class leapControls : MonoBehaviour {
                 init = false;
             }
 
+
             TrackHead();
         }
     }
@@ -220,7 +224,6 @@ public class leapControls : MonoBehaviour {
                 priorPos = cvHeadPos;
                 camInit = true;
             }
-                
         }
 
         // update the smoothing / prediction model
