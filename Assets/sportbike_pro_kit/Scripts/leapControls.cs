@@ -175,7 +175,7 @@ public class leapControls : MonoBehaviour {
                 if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
                     Vector leftV = hands.left.PalmPosition;
                     Vector rightV = hands.right.PalmPosition;
-                    float tilt = (rightV.z - leftV.z) / 300.0f;
+                    float tilt = (rightV.z - leftV.z) / 200.0f;
 
                     if (tilt > 0.9f)
                     {
@@ -201,11 +201,38 @@ public class leapControls : MonoBehaviour {
             }
 
 
-            TrackHead();
+            Vector3 v = TrackHead();
+
+            if (outsideControls.controlMode == controlHub.ControlMode.BODY_TILT)
+            {
+                float tilt = v.x * 3;
+
+                if (tilt > 0.9f)
+                {
+                    outsideControls.Horizontal = 0.9f;
+                }
+                else if (tilt < -0.9f)
+                {
+                    outsideControls.Horizontal = -0.9f;
+                }
+                else
+                {
+                    outsideControls.Horizontal = tilt;
+                }
+            }
+
+            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
+            {
+                float deltaX = v.x - oldV.x;
+                float deltaY = v.y - oldV.y;
+                outsideControls.CamX = (-0.0005 < deltaX && deltaX < 0.0005) ? 0 : deltaX;
+                outsideControls.CamY = (-0.0005 < deltaY && deltaY < 0.0005) ? 0 : deltaY;
+                oldV = v;
+            }
         }
     }
 
-    void TrackHead() {
+    Vector3 TrackHead() {
 
         ocv.UpdateOCVMat();
         Vector3 cvHeadPos = new Vector3();
@@ -228,32 +255,7 @@ public class leapControls : MonoBehaviour {
         // update the smoothing / prediction model
         posSmoothPred.UpdateModel(priorPos);
         // update the position of unity object
-        Vector3 v = posSmoothPred.StepPredict();
-
-        if (outsideControls.controlMode == controlHub.ControlMode.BODY_TILT) {
-            float tilt = v.x * 3;
-
-            if (tilt > 0.9f)
-            {
-                outsideControls.Horizontal = 0.9f;
-            }
-            else if (tilt < -0.9f)
-            {
-                outsideControls.Horizontal = -0.9f;
-            }
-            else
-            {
-                outsideControls.Horizontal = tilt;
-            }
-        }
-
-        if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT) {
-            float deltaX = v.x - oldV.x;
-            float deltaY = v.y - oldV.y;
-            outsideControls.CamX = (-0.0005 < deltaX && deltaX < 0.0005)? 0 : deltaX;
-            outsideControls.CamY = (-0.0005 < deltaY && deltaY < 0.0005)? 0 : deltaY;
-            oldV = v;
-        }
+        return posSmoothPred.StepPredict();
     }
 
     bool HaarClassCascade(ref Vector3 cvTrackedPos) {
@@ -264,13 +266,12 @@ public class leapControls : MonoBehaviour {
         int minSize = ocv.cvMat.Width / 10;
 
         // run the Haar detector algorithm
-        // docs.opencv.org/3.1.0/d7/d8b/tutorial_py_face_detection.html
         CvSeq<CvAvgComp> faces =
             Cv.HaarDetectObjects(ocv.cvMat, cascade, storage, scaleFactor, 2,
                                   0 | HaarDetectionType.ScaleImage,
                                   new CvSize(minSize, minSize));
 
-        // if faces have been found ....
+        // if faces have been found
         if (faces.Total > 0) {
             // rectangle defining face 1
             CvRect r = faces[0].Value.Rect;
@@ -280,10 +281,10 @@ public class leapControls : MonoBehaviour {
             // approx. the face diameter based on the rectangle size
             cvTrackedPos.z = (r.Width + r.Height) * 0.5f;
 
-            return true;    // YES, we found a face!
+            return true;    // Yes, we found a face!
         }
-        else
-            return false;   // no faces in this frame
+
+        return false;   // no faces in this frame
     }
 
     public Vector3 CvMat2ScreenCoord(Vector3 cvPos) {
