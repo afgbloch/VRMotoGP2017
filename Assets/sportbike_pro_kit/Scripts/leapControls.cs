@@ -159,6 +159,11 @@ public class leapControls : MonoBehaviour {
                         outsideControls.Horizontal = tilt;
                     }
                 }
+
+                if(left.PalmNormal.y > 0.9 && right.PalmNormal.y > 0.9)
+                {
+                    outsideControls.pauseResume();
+                }
             } else {
                 init = false;
             }

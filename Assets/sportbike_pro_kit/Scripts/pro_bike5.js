@@ -298,7 +298,7 @@ function FixedUpdate (){
 	
 		if(outsideControls.Vertical == 0){
 			coll_rearWheel.brakeTorque = Mathf.Max(0, coll_rearWheel.brakeTorque + airResistance);
-			print(coll_rearWheel.brakeTorque);
+			//print(coll_rearWheel.brakeTorque);
 		}
 
 		
