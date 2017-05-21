@@ -5,9 +5,12 @@ using OpenCvSharp;
 
 public class leapControls : MonoBehaviour {
 
-	private GameObject ctrlHub;// making a link to corresponding bike's script
-	private controlHub outsideControls;// making a link to corresponding bike's script
-	Controller controller;
+    // Links to corresponding bike's script
+    private GameObject ctrlHub;
+    private controlHub outsideControls;
+
+	Controller leapController = new Controller();
+
 	Frame first;
 	bool init = false;
     // webcam video
@@ -26,20 +29,15 @@ public class leapControls : MonoBehaviour {
     float knownFaceSize = 0.15f;
     Vector3 priorPos = new Vector3();
     public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
-    // object to be controlled with head position
-    public Transform controlledTr;
     Vector2 oldV;
     Vector oldMenuVector = new Vector();
+    controlHub.ControlMode oldMode;
+
 
     // Use this for initialization
     void Start () {
 		ctrlHub = GameObject.Find("gameScenario");//link to GameObject with script "controlHub"
 		outsideControls = ctrlHub.GetComponent<controlHub>();// making a link to corresponding bike's script
-
-		outsideControls.cameraMode = controlHub.CameraMode.FIRST_PERSON;
-		outsideControls.help = false; 
-	
-		controller = new Controller ();
 
         // init webcam capture and render to plane
         if (wc.InitWebcam()) {
@@ -56,39 +54,73 @@ public class leapControls : MonoBehaviour {
         camUnity.fieldOfView = wc.camFOV;
         FitPlaneIntoFOV(wc.imgPlane);
 
-
         cascade = CvHaarClassifierCascade.FromFile("Assets/HeadTracking/haarcascade_frontalface_alt.xml");
 
-        // scale controlled object to match face size
-        controlledTr.localScale = knownFaceSize * Vector3.one;
+    }
 
-        if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
-            outsideControls.camSpeed = 500.0f;
-            outsideControls.camVrView = true;
+    void checkMode()
+    {
+        if(outsideControls.controlMode != oldMode)
+        {
+            if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
+            {
+                outsideControls.camSpeed = 500.0f;
+                outsideControls.camVrView = true;
+            }
+
+            oldMode = outsideControls.controlMode;
         }
-
     }
     
     // Update is called once per frame
     void Update () {
 
+        checkMode();
+
         if (outsideControls.controlMode != controlHub.ControlMode.KEYBOARD_ONLY) {
-            Frame frame = controller.Frame();
+            Frame frame = leapController.Frame();
             HandList hands = frame.Hands;
             Hand left = null, right = null;
             bool valid = false;
-            outsideControls.restartBike = false;
             float speed = 0;
 
-            if (hands.Count > 0 && hands[0].IsRight && outsideControls.menuOn)
+            if (hands.Count > 0)
+            {
+                if (hands[0].IsLeft)
+                {
+                    left = hands[0];
+                }
+                else
+                {
+                    right = hands[0];
+                }
+            }
+
+            if (hands.Count > 1)
+            {
+                if (hands[1].IsLeft)
+                {
+                    left = hands[1];
+                }
+                else
+                {
+                    right = hands[1];
+                }
+            }
+
+            if(left != null && right != null)
+            {
+                valid = true;
+            }
+
+            if (right != null && outsideControls.menuOn)
             {
 
-                Vector menuV = hands[0].PalmPosition;
+                Vector menuV = right.PalmPosition;
 
                 outsideControls.menuStartStop = menuV.y >= 150;
                 outsideControls.menuMode = 75 < menuV.y && menuV.y < 150;
                 outsideControls.menuExit = menuV.y <= 75;
-
 
                 float delta = oldMenuVector.z - menuV.z;
                 if (delta > 45)
@@ -97,17 +129,6 @@ public class leapControls : MonoBehaviour {
                 }
                 
                 oldMenuVector = menuV;
-            }
-
-            if (hands.Count == 2) {
-                if (hands[0].IsLeft) {
-                    left = hands[0];
-                    right = hands[1];
-                } else {
-                    left = hands[1];
-                    right = hands[0];
-                }
-                valid = true;
             }
 
             if (valid) {
@@ -144,8 +165,6 @@ public class leapControls : MonoBehaviour {
                     Vector rightV = right.PalmPosition;
                     float tilt = (rightV.z - leftV.z) / 300.0f;
 
-                    //print("Tilt:" + tilt + " lz:" + leftV.z + " rz:" + rightV.z);
-
                     if (tilt > 0.9f)
                     {
                         outsideControls.Horizontal = 0.9f;
@@ -168,13 +187,13 @@ public class leapControls : MonoBehaviour {
                 init = false;
             }
 
-            ocv.UpdateOCVMat();
-            TrackHead3DSmooth();
+            TrackHead();
         }
     }
 
-    void TrackHead3DSmooth() {
+    void TrackHead() {
 
+        ocv.UpdateOCVMat();
         Vector3 cvHeadPos = new Vector3();
 
         if (HaarClassCascade(ref cvHeadPos)) {

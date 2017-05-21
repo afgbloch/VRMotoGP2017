@@ -1,0 +1,18 @@
+Menu Item
+----------
+start-resume
+Full restart
+Mode 
+View
+Help
+Exit
+
+Keyboard map
+---------
+esc -> menu
+R -> full restart
+h -> help
+m -> mode
+c -> rear
+(arrows -> move)
+v -> change view
