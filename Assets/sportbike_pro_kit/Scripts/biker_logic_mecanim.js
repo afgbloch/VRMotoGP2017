@@ -105,7 +105,7 @@ function Update () {
 	
 	
 	//in a case of restart
-	if (outsideControls.restartBike){
+	if (outsideControls.fullRestartBike){
 		var riderBodyVis = transform.Find("root/Hips");
 		riderBodyVis.gameObject.SetActive(true);
 	}

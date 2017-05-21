@@ -11,7 +11,7 @@ public class MenuScript : MonoBehaviour {
     // Get the game controls objects
     private GameObject ctrlHub;
     private controlHub outsideControls;
-    private readonly string[] CONTROL_MODE = { "Mode: keyboard", "Mode: body tilt", "Mode: hand tilt" };
+   
 
     void OnGUI ()
 	{
@@ -38,26 +38,62 @@ public class MenuScript : MonoBehaviour {
         // Start Item
         mediumText.normal.background = outsideControls.menuStartStop ? tex : texAlpha;
         
-        if (GUI.Button (new Rect (Screen.width -300, 350, 300, 40), "Start / Resume", mediumText) || (outsideControls.menuStartStop && outsideControls.menuClick))
+        if (GUI.Button (new Rect (Screen.width -300, Screen.height - 350, 300, 40), "Start / Resume", mediumText) || (outsideControls.menuStartStop && outsideControls.menuClick))
         {
             outsideControls.menuClick = false;
             resume();
         }
 
-        // One other item
+
+        // Full restart 
+        mediumText.normal.background = outsideControls.menuFullRestart ? tex : texAlpha;
+
+        if (GUI.Button(new Rect(Screen.width - 300, Screen.height - 300, 300, 40), "Full Restart", mediumText) || (outsideControls.menuFullRestart && outsideControls.menuClick))
+        {
+            outsideControls.menuClick = false;
+            outsideControls.fullRestartBike = true;
+            resume(); 
+        }
+        
+
+        // Controle Mode
         mediumText.normal.background = outsideControls.menuMode ? tex : texAlpha;
 
-        if (GUI.Button(new Rect(Screen.width - 300, 400, 300, 40), CONTROL_MODE[(int)outsideControls.controlMode], mediumText) || (outsideControls.menuMode && outsideControls.menuClick))
+        if (GUI.Button(new Rect(Screen.width - 300, Screen.height - 250, 300, 40), outsideControls.CONTROL_MODE[(int)outsideControls.controlMode], mediumText) || (outsideControls.menuMode && outsideControls.menuClick))
+        {
+            outsideControls.menuClick = false;
+            outsideControls.nextControlMode(); 
+        }
+
+
+        // view mode
+        mediumText.normal.background = outsideControls.menuView ? tex : texAlpha;
+
+        if (GUI.Button(new Rect(Screen.width - 300, Screen.height - 200, 300, 40), outsideControls.VIEW_MODE[(int)outsideControls.cameraMode], mediumText) || (outsideControls.menuView && outsideControls.menuClick))
         {
             outsideControls.menuClick = false;
             // Ready to add new menu option
-            outsideControls.nextControlMode(); 
+            outsideControls.switchCamera();
         }
+
+
+        // Help 
+        mediumText.normal.background = outsideControls.menuHelp ? tex : texAlpha;
+
+        int helpMode = outsideControls.help ? 1 : 0; 
+
+        if (GUI.Button(new Rect(Screen.width - 300, Screen.height - 150, 300, 40), outsideControls.HELP_MODE[helpMode], mediumText) || (outsideControls.menuHelp && outsideControls.menuClick))
+        {
+            outsideControls.menuClick = false;
+            // Ready to add new menu option
+            outsideControls.help = !outsideControls.help; 
+        }
+
 
         // Exit item
         mediumText.normal.background = outsideControls.menuExit ? tex : texAlpha;
         
-        if (GUI.Button(new Rect(Screen.width - 300, 450, 300, 40), "Exit", mediumText) || (outsideControls.menuExit && outsideControls.menuClick))
+        if (GUI.Button(new Rect(Screen.width - 300, Screen.height-100, 300, 40), "Exit", mediumText) || (outsideControls.menuExit && outsideControls.menuClick))
         {
             outsideControls.menuClick = false;
             Application.Quit();
