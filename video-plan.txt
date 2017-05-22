@@ -1,0 +1,16 @@
+- Made with unity
+- Leap Motion
+- titre intro
+	VRMoto2017
+- Menu
+- three Modes
+	- Keyboard Mode
+	- tilt Mode
+		- gauche/droite
+		- hand zoom
+		- gaming session
+	- hand Mode
+		- gauche/droite
+		- head tracking
+		- gaming session
+- credits
