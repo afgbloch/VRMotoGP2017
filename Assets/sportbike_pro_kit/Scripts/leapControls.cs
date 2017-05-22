@@ -10,8 +10,8 @@ public class leapControls : MonoBehaviour {
     private controlHub outsideControls;
 
 	Controller leapController = new Controller();
-
-	Frame first;
+    // hand rotation initialization
+    Frame first;
 	bool init = false;
     // webcam video
     public Webcam wc = new Webcam();
@@ -25,11 +25,17 @@ public class leapControls : MonoBehaviour {
     public Camera camUnity;
     // distance between camUnity and webcam imgPlane
     float wcImgPlaneDist = 1.0f;
+    // previous ocv tracked vector
     Vector3 priorPos = new Vector3();
     public V3DoubleExpSmoothing posSmoothPred = new V3DoubleExpSmoothing();
-    Vector2 oldV;
-    Vector oldMenuVector = new Vector();
-    controlHub.ControlMode oldMode;
+    // previous ocv tracked vector for camera delta
+    Vector2 prevTrackV;
+    // previous hand palm center for menu
+    Vector prevMenuV = new Vector();
+    // control mode currently in
+    controlHub.ControlMode currentMode;
+
+    // init camVR view to resting view
     bool camInit = false;
 
     // represent pair or hands
@@ -70,30 +76,6 @@ public class leapControls : MonoBehaviour {
         {
             outsideControls.camSpeed = 500.0f;
             outsideControls.camVrView = true;
-        }
-    }
-
-    // apply leap motion effect on the menu
-    void menuGestures(ref Hands hands)
-    {
-        if (hands.right != null && outsideControls.menuOn)
-        {
-            Vector menuV = hands.right.PalmPosition;
-
-            outsideControls.menuStartStop = menuV.y >= 230;
-            outsideControls.menuFullRestart = 190 < menuV.y && menuV.y < 230;
-            outsideControls.menuMode = 150 < menuV.y && menuV.y <= 190;
-            outsideControls.menuView = 110 < menuV.y && menuV.y <= 150;
-            outsideControls.menuHelp = 70 < menuV.y && menuV.y <= 110;
-            outsideControls.menuExit = menuV.y <= 70;
-
-            float delta = oldMenuVector.z - menuV.z;
-            if (delta > 45)
-            {
-                outsideControls.menuClick = true;
-            }
-
-            oldMenuVector = menuV;
         }
     }
 
@@ -214,14 +196,38 @@ public class leapControls : MonoBehaviour {
 
         if (outsideControls.controlMode == controlHub.ControlMode.HAND_TILT)
         {
-            float deltaX = v.x - oldV.x;
-            float deltaY = v.y - oldV.y;
+            float deltaX = v.x - prevTrackV.x;
+            float deltaY = v.y - prevTrackV.y;
             outsideControls.CamX = (-0.0005 < deltaX && deltaX < 0.0005) ? 0 : deltaX;
             outsideControls.CamY = (-0.0005 < deltaY && deltaY < 0.0005) ? 0 : deltaY;
-            oldV = v;
+            prevTrackV = v;
         }
     }
-    
+
+    // apply leap motion effect on the menu
+    void menuGestures(ref Hands hands)
+    {
+        if (hands.right != null && outsideControls.menuOn)
+        {
+            Vector menuV = hands.right.PalmPosition;
+
+            outsideControls.menuStartStop = menuV.y >= 230;
+            outsideControls.menuFullRestart = 190 < menuV.y && menuV.y < 230;
+            outsideControls.menuMode = 150 < menuV.y && menuV.y <= 190;
+            outsideControls.menuView = 110 < menuV.y && menuV.y <= 150;
+            outsideControls.menuHelp = 70 < menuV.y && menuV.y <= 110;
+            outsideControls.menuExit = menuV.y <= 70;
+
+            float delta = prevMenuV.z - menuV.z;
+            if (delta > 45)
+            {
+                outsideControls.menuClick = true;
+            }
+
+            prevMenuV = menuV;
+        }
+    }
+
     // Update is called once per frame
     void Update () {
 
