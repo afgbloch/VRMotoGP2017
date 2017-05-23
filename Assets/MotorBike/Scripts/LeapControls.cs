@@ -9,7 +9,6 @@ using OpenCvSharp;
 
 public class LeapControls : MonoBehaviour
 {
-    
     private GameObject ctrlHub;
     private ControlHub outsideControls;
 

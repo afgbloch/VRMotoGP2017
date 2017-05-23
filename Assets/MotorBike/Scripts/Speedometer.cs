@@ -2,40 +2,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+// Small Script to display Speed and RPM indicator
+// From three textures this class draw on the GUI
+// some "circled" indicator
+//
+
 public class Speedometer : MonoBehaviour {
 
-    //speedometer
+    // Speed Counter
     public Texture2D GUIDashboard;
     public Texture2D dashboardArrow;
-    private float topSpeed;
-    private float stopAngle;
-    private float topSpeedAngle;
+    private float topSpeed = 210;
+    private float stopAngle = -215;
+    private float topSpeedAngle = 0;
     public float speed;
 
-    //tachometer
+    // RPM Counter
     public Texture2D chronoTex;
-    private float topRPM;
-    private float stopRPMAngle;
-    private float topRPMAngle;
+    private float topRPM = 12000;
+    private float stopRPMAngle = -200;
+    private float topRPMAngle = 0;
     public float RPM;
 
-    //link to bike script
+    // Link to MainBike script
     public MainBike mainBike;
 
 
 	// Use this for initialization
 	void Start () {
         mainBike = GameObject.Find("rigid_bike").GetComponent<MainBike>();
-
-        topSpeed = 210;
-        stopAngle = -215;
-        topSpeedAngle = 0;
-        topRPM = 12000;
-        stopRPMAngle = -200;
-        topRPMAngle = 0;
-        wait(0.5f);
-        MainBike linkToBike1 = GameObject.Find("rigid_bike").GetComponent<MainBike>();
-        mainBike = linkToBike1;
+        StartCoroutine(linkBike());
     }
 
     private void OnGUI()
@@ -43,6 +40,8 @@ public class Speedometer : MonoBehaviour {
         // draw the speedometer interface only if the menu is not open (which is equivalent of not existing)
         if (GameObject.Find("menuCamera") == null)
         {
+            //Positioning could be better
+
             // speedometer
             GUI.DrawTexture(new Rect(Screen.width * 0.85f, Screen.height * 0.8f, GUIDashboard.width / 2, GUIDashboard.height / 2), GUIDashboard);
             Vector2 centre = new Vector2(Screen.width * 0.85f + GUIDashboard.width / 4, Screen.height * 0.8f + GUIDashboard.height / 4);
@@ -69,13 +68,16 @@ public class Speedometer : MonoBehaviour {
     // Update is called once per frame
     void FixedUpdate () {
         speed = mainBike.bikeSpeed;
-        RPM = mainBike.EngineRPM;
+        RPM = mainBike.engineRPM;
     }
 
 
-    // Local waiting method
-    private IEnumerator wait(float time)
+    // Link the main bike after a waiting pause of 0.5 sec
+    private IEnumerator linkBike()
     {
-        yield return new WaitForSeconds(time);
+        // Link to bike and init others variables
+        yield return new WaitForSeconds(0.5f);
+        MainBike linkToBike1 = GameObject.Find("rigid_bike").GetComponent<MainBike>();
+        mainBike = linkToBike1;
     }
 }

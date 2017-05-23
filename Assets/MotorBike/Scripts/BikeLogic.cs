@@ -2,41 +2,47 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+// BikeLogic class
+// Mainly contains the bike/biker animations
+//
+//  The used annimation and the corresponding model
+//  come from the store
+//
+
 public class BikeLogic : MonoBehaviour {
 
-    private Animator myAnimator;
+    // Main Animator
+    private Animator mainAnimator;
 
-    // variables for turn IK link off for a time
-    private int IK_rightWeight = 1;
-    private int IK_leftWeight = 1;
+    // Turn Inverse Kinematics 
+    private int rightWeightIK = 1;
+    private int leftWeightIK = 1;
 
-    //variables for moving right/left and forward/backward
+    // Moving right/left and forward/backward
     private float bikerLeanAngle = 0.0f;
     private float bikerMoveAlong = 0.0f;
 
-    //variables for moving reverse animation
+    // Moving reverse animation
     private float reverseSpeed = 0.0f;
 
-    // variables for hand IK joint points
-    public Transform IK_rightHandTarget;
-    public Transform IK_leftHandTarget;
+    // Hand IK joint points
+    public Transform rightHandTargetIK;
+    public Transform leftHandTargetIK;
 
-    //fake joint for physical movement biker to imitate inertia
+    // Fake joint for physical movement biker to imitate inertia
     public Transform fakeCharPhysJoint;
 
-    //we need to know bike we ride on
+    // The Bike GameObject
     public GameObject bikeRideOn;
 
 
-
-    private MainBike mainBike;// making a link to corresponding bike's script
+    // Link to MainBike script
+    private MainBike mainBike;
 
 
     private GameObject ctrlHub;
     private ControlHub outsideControls;
-
-
-
 
 
     // Use this for initialization
@@ -45,30 +51,29 @@ public class BikeLogic : MonoBehaviour {
         ctrlHub = GameObject.Find("gameScenario");
         // Extract the control hub from it
         outsideControls = ctrlHub.GetComponent<ControlHub>();
-        mainBike = bikeRideOn.GetComponent<MainBike>();
 
-        //to turn off layer with reverse animation which override all other
-        myAnimator = GetComponent<Animator>();
-        myAnimator.SetLayerWeight(2, 0);
+        // Link to bike and init others variables
+        mainBike = bikeRideOn.GetComponent<MainBike>();
+        mainAnimator = GetComponent<Animator>();
+        mainAnimator.SetLayerWeight(2, 0);
     }
 
-    //fundamental mecanim IK script
-    //just keeps hands on wheelbar
+    // This methode keeps hands on wheelbar
     void OnAnimatorIK(int layerIndex)
     {
-        if (IK_rightHandTarget != null)
+        if (rightHandTargetIK != null)
         {
-            myAnimator.SetIKPositionWeight(AvatarIKGoal.RightHand, IK_rightWeight);
-            myAnimator.SetIKRotationWeight(AvatarIKGoal.RightHand, IK_rightWeight);
-            myAnimator.SetIKPosition(AvatarIKGoal.RightHand, IK_rightHandTarget.position);
-            myAnimator.SetIKRotation(AvatarIKGoal.RightHand, IK_rightHandTarget.rotation);
+            mainAnimator.SetIKPositionWeight(AvatarIKGoal.RightHand, rightWeightIK);
+            mainAnimator.SetIKRotationWeight(AvatarIKGoal.RightHand, rightWeightIK);
+            mainAnimator.SetIKPosition(AvatarIKGoal.RightHand, rightHandTargetIK.position);
+            mainAnimator.SetIKRotation(AvatarIKGoal.RightHand, rightHandTargetIK.rotation);
         }
-        if (IK_leftHandTarget != null)
+        if (leftHandTargetIK != null)
         {
-            myAnimator.SetIKPositionWeight(AvatarIKGoal.LeftHand, IK_leftWeight);
-            myAnimator.SetIKRotationWeight(AvatarIKGoal.LeftHand, IK_leftWeight);
-            myAnimator.SetIKPosition(AvatarIKGoal.LeftHand, IK_leftHandTarget.position);
-            myAnimator.SetIKRotation(AvatarIKGoal.LeftHand, IK_leftHandTarget.rotation);
+            mainAnimator.SetIKPositionWeight(AvatarIKGoal.LeftHand, leftWeightIK);
+            mainAnimator.SetIKRotationWeight(AvatarIKGoal.LeftHand, leftWeightIK);
+            mainAnimator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandTargetIK.position);
+            mainAnimator.SetIKRotation(AvatarIKGoal.LeftHand, leftHandTargetIK.rotation);
         }
     }
 
@@ -79,131 +84,133 @@ public class BikeLogic : MonoBehaviour {
         //moves character with fake inertia
         if (fakeCharPhysJoint)
         {
-
             this.transform.localEulerAngles = new Vector3(
                 fakeCharPhysJoint.localEulerAngles.x,
                 fakeCharPhysJoint.localEulerAngles.y,
                 fakeCharPhysJoint.localEulerAngles.z
             );
-
         }
         else
         {
             return;
         }
 
-        //the character should play animations when player press control keys
-        //horizontal movement
+        // Check the outside control to know when launch animation
+        // So for the horizontal movement
         if (outsideControls.horizontal < 0 && bikerLeanAngle > -1.0)
         {
-            bikerLeanAngle = bikerLeanAngle -= 8 * Time.deltaTime;//8 - "magic number" of speed of pilot's body movement across. Just 8 - face it :)
-            if (bikerLeanAngle < outsideControls.horizontal) bikerLeanAngle = outsideControls.horizontal;//this string seems strange but it's necessary for mobile version
-            myAnimator.SetFloat("lean", bikerLeanAngle);//the character play animation "lean" for bikerLeanAngle more and more
+            // On the left
+            bikerLeanAngle = bikerLeanAngle -= 8 * Time.deltaTime;//8 seems to be a good value
+            if (bikerLeanAngle < outsideControls.horizontal) bikerLeanAngle = outsideControls.horizontal;
+            // The character play animation "lean" 
+            mainAnimator.SetFloat("lean", bikerLeanAngle);
         }
-        if (outsideControls.horizontal > 0 && bikerLeanAngle < 1.0)
+        else if (outsideControls.horizontal > 0 && bikerLeanAngle < 1.0)
         {
+            // On the right
             bikerLeanAngle = bikerLeanAngle += 8 * Time.deltaTime;
             if (bikerLeanAngle > outsideControls.horizontal) bikerLeanAngle = outsideControls.horizontal;
-            myAnimator.SetFloat("lean", bikerLeanAngle);
+            mainAnimator.SetFloat("lean", bikerLeanAngle);
         }
-        //vertical movement
+        else if (outsideControls.horizontal == 0)
+        {
+            // Make the biker gradually going back to its origianl horizontal position
+            // if no horizontal input is given
+            if (bikerLeanAngle > 0)
+            {
+                bikerLeanAngle = bikerLeanAngle -= 6 * Time.deltaTime;//3 seems to be a good value
+                mainAnimator.SetFloat("lean", bikerLeanAngle);
+            }
+            if (bikerLeanAngle < 0)
+            {
+                bikerLeanAngle = bikerLeanAngle += 6 * Time.deltaTime;
+                mainAnimator.SetFloat("lean", bikerLeanAngle);
+            }
+        }
+
+
+        // And for the vertical movement
         if (outsideControls.vertical > 0 && bikerMoveAlong < 1.0)
         {
             bikerMoveAlong = bikerMoveAlong += 3 * Time.deltaTime;
             if (bikerMoveAlong > outsideControls.vertical) bikerMoveAlong = outsideControls.vertical;
-            myAnimator.SetFloat("moveAlong", bikerMoveAlong);
+            mainAnimator.SetFloat("moveAlong", bikerMoveAlong);
         }
-        if (outsideControls.vertical < 0 && bikerMoveAlong > -1.0)
+        else if (outsideControls.vertical < 0 && bikerMoveAlong > -1.0)
         {
             bikerMoveAlong = bikerMoveAlong -= 3 * Time.deltaTime;
             if (bikerMoveAlong < outsideControls.vertical) bikerMoveAlong = outsideControls.vertical;
-            myAnimator.SetFloat("moveAlong", bikerMoveAlong);
+            mainAnimator.SetFloat("moveAlong", bikerMoveAlong);
+        }
+        else if (outsideControls.vertical == 0)
+        {
+            // Make the biker gradually going back to its origianl vertical position
+            // if no vertical input is given
+            if (bikerMoveAlong > 0)
+            {
+                bikerMoveAlong = bikerMoveAlong -= 2 * Time.deltaTime;//3 seems to be a good value
+                mainAnimator.SetFloat("moveAlong", bikerMoveAlong);
+            }
+            if (bikerMoveAlong < 0)
+            {
+                bikerMoveAlong = bikerMoveAlong += 2 * Time.deltaTime;
+                mainAnimator.SetFloat("moveAlong", bikerMoveAlong);
+            }
         }
 
 
-        //in a case of restart
+        // If restart
         if (outsideControls.fullRestartBike)
         {
             Transform riderBodyVis = transform.Find("root/Hips");
             riderBodyVis.gameObject.SetActive(true);
         }
 
-        //function for avarage rider pose
-        bikerComeback();
-
-
-        // pull leg(s) down when bike stopped
+        
+        // Pull one or two legs down when bike is stopped
         float legOffValue = 0;
         if (Mathf.Round((bikeRideOn.GetComponent<Rigidbody>().velocity.magnitude * 3.6f) * 10) * 0.1 <= 15)
-        {//no reverse speed
+        {
             reverseSpeed = 0.0f;
-            myAnimator.SetFloat("reverseSpeed", reverseSpeed);
+            mainAnimator.SetFloat("reverseSpeed", reverseSpeed);
 
             if (bikeRideOn.transform.localEulerAngles.z <= 10 || bikeRideOn.transform.localEulerAngles.z >= 350)
             {
                 if (bikeRideOn.transform.localEulerAngles.x <= 10 || bikeRideOn.transform.localEulerAngles.x >= 350)
                 {
-                    legOffValue = (15 - (Mathf.Round((bikeRideOn.GetComponent<Rigidbody>().velocity.magnitude * 3.6f) * 10) * 0.1f)) / 15;//need to define right speed to begin put down leg(s)
-                    myAnimator.SetLayerWeight(3, legOffValue);//leg is no layer 3 in animator
+                    legOffValue = (15 - (Mathf.Round((bikeRideOn.GetComponent<Rigidbody>().velocity.magnitude * 3.6f) * 10) * 0.1f)) / 15;
+                    mainAnimator.SetLayerWeight(3, legOffValue);//leg is no layer 3 in animator
                 }
             }
         }
 
-        //when using reverse speed
-        //TODO TEST
+        // When moving backward
         if (Mathf.Round((bikeRideOn.GetComponent<Rigidbody>().velocity.magnitude * 3.6f) * 10.0f) * 0.1 <= 15)
-        {//reverse speed
+        {
 
-            myAnimator.SetLayerWeight(3, legOffValue);
-            myAnimator.SetLayerWeight(2, 1); //to turn on layer with reverse animation which override all other
+            mainAnimator.SetLayerWeight(3, legOffValue);
+            //Turn on layer with reverse animation
+            mainAnimator.SetLayerWeight(2, 1); 
 
             reverseSpeed = mainBike.bikeSpeed / 3;
-            myAnimator.SetFloat("reverseSpeed", reverseSpeed);
+            mainAnimator.SetFloat("reverseSpeed", reverseSpeed);
             if (reverseSpeed >= 1.0f)
             {
                 reverseSpeed = 1.0f;
             }
 
-            myAnimator.speed = reverseSpeed;
+            mainAnimator.speed = reverseSpeed;
 
         }
         else if (Mathf.Round((bikeRideOn.GetComponent<Rigidbody>().velocity.magnitude * 3.6f) * 10) * 0.1 > 15)
         {
             reverseSpeed = 0.0f;
-            myAnimator.SetFloat("reverseSpeed", reverseSpeed);
-            myAnimator.SetLayerWeight(3, legOffValue);
-            myAnimator.SetLayerWeight(2, 0); //to turn off layer with reverse animation which override all other
-            myAnimator.speed = 1;
+            mainAnimator.SetFloat("reverseSpeed", reverseSpeed);
+            mainAnimator.SetLayerWeight(3, legOffValue);
+            // Turn off layer with reverse animation 
+            mainAnimator.SetLayerWeight(2, 0); 
+            mainAnimator.speed = 1;
         }
     }
-
-    void bikerComeback()
-    {
-        if (outsideControls.horizontal == 0)
-        {
-            if (bikerLeanAngle > 0)
-            {
-                bikerLeanAngle = bikerLeanAngle -= 6 * Time.deltaTime;//6 - "magic number" of speed of pilot's body movement back across. Just 6 - face it :)
-                myAnimator.SetFloat("lean", bikerLeanAngle);
-            }
-            if (bikerLeanAngle < 0)
-            {
-                bikerLeanAngle = bikerLeanAngle += 6 * Time.deltaTime;
-                myAnimator.SetFloat("lean", bikerLeanAngle);
-            }
-        }
-        if (outsideControls.vertical == 0)
-        {
-            if (bikerMoveAlong > 0)
-            {
-                bikerMoveAlong = bikerMoveAlong -= 2 * Time.deltaTime;//3 - "magic number" of speed of pilot's body movement back along. Just 3 - face it :)
-                myAnimator.SetFloat("moveAlong", bikerMoveAlong);
-            }
-            if (bikerMoveAlong < 0)
-            {
-                bikerMoveAlong = bikerMoveAlong += 2 * Time.deltaTime;
-                myAnimator.SetFloat("moveAlong", bikerMoveAlong);
-            }
-        }
-    }
+    
 }

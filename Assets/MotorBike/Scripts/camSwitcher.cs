@@ -2,12 +2,12 @@
 using System.Collections;
 
 
-///////////////////////////////////////////////////////////////////////////////////////////
-/// Camera Switcher 
-/// written by Boris Chuprin  
-/// and adapted by Bastien Chatelain and Aurelien Bloch 
-///////////////////////////////////////////////////////////////////////////////////////////
-public class camSwitcher : MonoBehaviour
+// Camera Switcher class
+// This class deal with the two bike camera (first and third person)
+// 
+//
+
+public class CamSwitcher : MonoBehaviour
 {
     // The current camera is one of the following
     private Camera currentCamera;
@@ -33,24 +33,22 @@ public class camSwitcher : MonoBehaviour
     //Bonus - Camera behaviour by Boris Chuprin
     private float currentTargetAngle;
 
-    // gameobject with script control variables
-    private GameObject ctrlHub;
 
-    // making a link to corresponding bike's script
+    private GameObject ctrlHub;
     private ControlHub outsideControls;
 	
 
 	/////////////////////// Initialization ////////////////////////////////////////////////////
     void Start ()
 	{
-        //link to GameObject with script "ControlHub"
+        // Get the gameScenario game object which contains the control hub
         ctrlHub = GameObject.Find("gameScenario");
-
-        //to connect c# LeapMotion and Camera control
+        // Extract the control hub from it
         outsideControls = ctrlHub.GetComponent<ControlHub>();
 
-        //By default first person camera is enabled and so current
-		firstPersonCamera.enabled = true;
+
+        //By default first person camera is Active, Enabled and so current
+        firstPersonCamera.enabled = true;
         thirdPersonCamera.enabled = false;
         firstPersonCamera.gameObject.SetActive(true);
         thirdPersonCamera.gameObject.SetActive(false);
@@ -117,8 +115,6 @@ public class camSwitcher : MonoBehaviour
 
             ///////////////////////////////////////////////////////////////////////////////////////////
             // Orientate the point of view in first person. 
-            // For now it use the right mouse click to move view. 
-            // TODO Map this functionality with the webcam view point direction
             ///////////////////////////////////////////////////////////////////////////////////////////
             if (outsideControls.camVrView)
             {

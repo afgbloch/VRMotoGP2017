@@ -2,105 +2,145 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Main Bike Script
+//  A lot of parameter are tunable from the editor
+//  some of them must be linked to provided bike meshes
+//  see the update methode comment for more informations
+//
+// Any bike model should be compatible if it can provide the folowing
+// collider and meshes
+// The model we use in this project has been modeled and animated by Boris Churpin
+// and adapted by Aurélien Bloch and Bastien Chatelain for a Virtual Reality Class Project
+// The scripts we propose probably not take advantage of the whole Bike model which is very complete and complex
+
 public class MainBike : MonoBehaviour
 {
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /// Writen by Boris Chuprin smokerr@mail.ru and 
-    /// adapted by Bastien Chatelain and Aurelien Bloch 
-    /// For Virtual reality project
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    //Debug variable for this class. Can be set in the unity window
-    bool pro_bike_debug = false;
+    // Debug variable for this class. Can be set in the unity window
+    public bool MAIN_BIKE_DEBUG = false;
 
 
     ///////////////////////////////////////// wheels //////////////////////////////////////////////////
-    // define their colliders
-    public WheelCollider coll_frontWheel;
-    public WheelCollider coll_rearWheel;
-    // define their mesh
-    public GameObject meshFrontWheel;
-    public GameObject meshRearWheel;
+    // Define their colliders from editor (to link)
+    public WheelCollider frontWheelCollider;
+    public WheelCollider rearWheelCollider;
+    // Define their meshes from editor (to link)
+    public GameObject frontWheelMesh;
+    public GameObject rearWheelMesh;
 
 
     /////////////////////////////// Stifness, CoM(center of mass) /////////////////////////////////////
-    //for stiffness counting when rear brake is on. Need that to lose real wheel's stiffness during time
+    // For stiffness counting when rear brake is on. 
+    // Need that to lose real wheel's stiffness during time
     private float stiffPowerGain = 0.0f;
-    //for CoM moving along and across bike. Pilot's CoM.
-    private float tmpMassShift = 0.0f;
 
-    // define CoM of bike
-    public Transform CoM; //CoM object
-                   //normalCoM is for situation when script need to return CoM in starting position :
+    // Define CoM of bike from editor
+    public Transform CoM;
+    // Default CoM position :
     public float normalCoM = 0.0f;
 
-    //maximum the bike can be inclined Horizontaly
-    public float maxHorizontalAngle;
-    public float airResistance;
 
-    ////////////////// "beauties" of visuals - some meshes for display visual parts of bike ////////////
-    //rear pendulumn
+    ////////////////// "Some meshes for display visual parts of bike ////////////
+    // Rear pendulumn
     public Transform rearPendulumn;
-    //wheel bar
+    // Wheel bar
     public Transform steeringWheel;
-    //lower part of front forge
-    public Transform suspensionFront_down;
+    // Lower part of front forge
+    public Transform suspensionFrontDown;
 
-    // we need to declare it to know what is normal front spring state is
+    // Normal front spring state
     private float normalFrontSuspSpring;
-    // we need to declare it to know what is normal rear spring state is
-    public float normalRearSuspSpring;
+    // Normal rear spring state
+    private float normalRearSuspSpring;
 
 
-    // we need to clamp wheelbar angle according the speed. it means - the faster bike rides the less angle 
-    // you can rotate wheel bar first number in Keyframe is speed, second is max wheelbar degree
-    public AnimationCurve wheelbarRestrictCurve = new AnimationCurve(new Keyframe(0f, 20f), new Keyframe(100f, 1f));
-    // temporary variable to restrict wheel angle according speed
+    // We need to clamp wheelbar angle according the speed : 
+    // high speed -> low angle 
+    // We create a curve which is 
+    // -> 15degree at 0 speed
+    // -> 1 degree at 100 speed
+    public AnimationCurve wheelbarRestrictCurve = new AnimationCurve(new Keyframe(0f, 15f), new Keyframe(100f, 1f));
+    // Temporary variable which contains the evaluation of previous curve for current speed
     private float tempMaxWheelAngle;
 
-    //for wheels vusials match up the wheelColliders
+    // For wheels vusials match up the wheelColliders
     private Vector3 wheelCCenter;
     private RaycastHit hit;
 
     ////////////////////////////// technical variables ////////////////////////////////////////////////
-    //to know bike speed km/h
+    // The bike speed km/h
     public float bikeSpeed;
 
-    //to turn On and Off reverse speed
-    static bool isReverseOn = false;
-    // Engine
-    //brake power which is an absract value but make sense
+    // The airResuistance (to trick in the editor)
+    public float airResistance = 2;
+
+    // The rear gear can be engaged only if the speed is 0
+    bool isRearGearEngaged = false;
+
+    // Brake power which is an absract value but make sense
     public float frontBrakePower;
-    //engine power which is also an abstract value
-    public float EngineTorque;
+    // Engine power which is also an abstract value
+    public float engineTorque;
 
     /// GearBox
-    //engine maximum rotation per minute(RPM) when gearbox should switch to higher gear 
-    public float MaxEngineRPM;
-    // Ideal moment to change up the CurrentGear
-    public float EngineRedline;
-    //lowest RPM when gear need to be switched down
-    public float MinEngineRPM;
-    // engine current rotation per minute(RPM)
-    public float EngineRPM;
-    // gear ratios which is an abstract
-    public float[] GearRatio;
+    // Gear ratios which are abstract values
+    public float[] gearRatio;
+    // Engine maximum rotation per minute(RPM) 
+    // When gearbox should switch to higher gear 
+    public float maxEngineRPM;
+    // Ideal moment to change up the currentGear
+    public float engineRedline;
+    // Lowest RPM when gear need to be switched down
+    public float minEngineRPM;
+    // Engine current rotation per minute(RPM)
+    public float engineRPM;
     // current gear
-    public int CurrentGear = 0;
-
-    // gameobject with script control variables 
-    private GameObject ctrlHub;
-    // making a link to corresponding bike's script
-    private ControlHub outsideControls;
+    public int currentGear = 0;
 
 
-    // initial position and rotation of the bike for full Restart.
+    // Initial position and rotation of the bike for full Restart.
     public Vector3 initialPosition;
     public Quaternion initialRotation;
 
+    private GameObject ctrlHub;
+    private ControlHub outsideControls;
 
-    /////////////////////////////////////////  ON SCREEN INFO /////////////////////////////////////////
+    // Use this for bike initialization
+    void Start()
+    {
+        // Get the gameScenario game object which contains the control hub
+        ctrlHub = GameObject.Find("gameScenario");
+        // Extract the control hub from it
+        outsideControls = ctrlHub.GetComponent<ControlHub>();
+
+
+        // From Unity 5.3f we need to use intertiaTensor
+        Vector3 setInitialTensor = GetComponent<Rigidbody>().inertiaTensor;
+        GetComponent<Rigidbody>().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+        GetComponent<Rigidbody>().inertiaTensor = setInitialTensor;
+
+        // Defaut wheel colors is black
+        // Can be colored in debug mode to illustrate breacking and acceleration
+        frontWheelMesh.GetComponent<Renderer>().sharedMaterial.color = Color.black;
+        rearWheelMesh.GetComponent<Renderer>().sharedMaterial.color = Color.black;
+
+        // Scale editor parameter
+        engineTorque = engineTorque * 20;
+        frontBrakePower = frontBrakePower * 20;
+
+        //tehcnical variables
+        normalRearSuspSpring = rearWheelCollider.suspensionSpring.spring;
+        normalFrontSuspSpring = frontWheelCollider.suspensionSpring.spring;
+
+        initialPosition = transform.position + new Vector3(0, 0.2f, 0);
+        initialRotation = transform.rotation;
+
+        outsideControls.fullRestartBike = true;
+    }
+
+
     void OnGUI()
     {
+        // draw the speedometer interface only if the menu is not open (which is equivalent of not existing)
         if (GameObject.Find("menuCamera") == null || outsideControls.help)
         {
             //Prepare Styles for different Label size
@@ -112,18 +152,17 @@ public class MainBike : MonoBehaviour
             smallerText.fontSize = 14;
 
             //to show in on display interface: speed, gear and RPM
-
             if (GameObject.Find("menuCamera") == null)
             {
 
                 GUI.color = Color.black;
                 GUI.Label(new Rect(Screen.width * 0.875f, Screen.height * 0.9f, 120, 80), string.Format("" + "{0:0.}", bikeSpeed), biggerText);
-                GUI.Label(new Rect(Screen.width * 0.76f, Screen.height * 0.88f, 60, 80), "" + (CurrentGear + 1), biggerText);
+                GUI.Label(new Rect(Screen.width * 0.76f, Screen.height * 0.88f, 60, 80), "" + (currentGear + 1), biggerText);
 
                 GUI.color = Color.grey;
                 GUI.Label(new Rect(Screen.width - 200, 10, 250, 40), "" + outsideControls.CONTROL_MODE[(int)outsideControls.controlMode], middleText);
 
-                if (!isReverseOn)
+                if (!isRearGearEngaged)
                 {
                     GUI.Label(new Rect(Screen.width * 0.885f, Screen.height * 0.96f, 60, 40), "REAR", smallerText);
                 }
@@ -142,7 +181,9 @@ public class MainBike : MonoBehaviour
             // user info help box lines
             if (outsideControls.help)
             {
-
+                // Help control for each mode
+                // I decided to dupplicate code line with similar command
+                // to simplify modification
 
                 if (outsideControls.controlMode == ControlHub.ControlMode.KEYBOARD_ONLY)
                 {
@@ -182,381 +223,254 @@ public class MainBike : MonoBehaviour
     }
 
 
-    void Start()
-    {
-
-        //link to GameObject with script "ControlHub"
-        ctrlHub = GameObject.Find("gameScenario");
-        //to connect c# mobile control script to this one
-        outsideControls = ctrlHub.GetComponent<ControlHub>();
-
-
-        //Not used for now ! Will be use to set the limit horizontal angle of the bike
-        // TODO set the value and use it. 
-        maxHorizontalAngle = 40.0f;
-        airResistance = 2.0f;
-
-        //this string is necessary for Unity 5.3f with new PhysX feature when Tensor decoupled from center of mass
-        Vector3 setInitialTensor = GetComponent< Rigidbody > ().inertiaTensor;
-
-
-        // now Center of Mass(CoM) is alligned to GameObject "CoM"
-        GetComponent< Rigidbody > ().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
-        //this string is necessary for Unity 5.3f with new PhysX feature when Tensor decoupled from center of mass
-        GetComponent< Rigidbody > ().inertiaTensor = setInitialTensor;
-
-        // wheel colors for understanding of accelerate, idle, brake(black is idle status)
-        meshFrontWheel.GetComponent< Renderer > ().sharedMaterial.color = Color.black;
-        meshRearWheel.GetComponent< Renderer > ().sharedMaterial.color = Color.black;
-
-        //for better physics of fast moving bodies
-        GetComponent< Rigidbody > ().interpolation = RigidbodyInterpolation.Interpolate;
-
-        // too keep EngineTorque variable like "real" horse powers
-        EngineTorque = EngineTorque * 20;
-
-        //*30 is for good braking to keep frontBrakePower = 100 for good brakes.
-        //30 is abstract but necessary for Unity5
-        frontBrakePower = frontBrakePower * 30;
-
-        //tehcnical variables
-        normalRearSuspSpring = coll_rearWheel.suspensionSpring.spring;
-        normalFrontSuspSpring = coll_frontWheel.suspensionSpring.spring;
-
-        initialPosition = this.transform.position + new Vector3(0, 0.1f, 0);
-        initialRotation = this.transform.rotation;
-
-        outsideControls.fullRestartBike = true;
-    }
-
-
+    // Update is called once per frame
+    // Do in this order : 
+    // - React if we need to shift the gear
+    // - Correct some mesh position
+    // - Compute the speed
+    // - Accelerate (forward / backward)
+    // - Break
+    // - Engage the rear gear if needed
+    // - Turn
+    // - Reset the bike if needed
+    //
     void FixedUpdate()
     {
-
-
-
-        // if RPM is more than engine can hold we should shift gear up or down
-        EngineRPM = Mathf.Max(0.0f, coll_rearWheel.rpm * GearRatio[CurrentGear]);
-        if (EngineRPM > EngineRedline)
+        // if RPM is more than the limit we should shift gear up or down
+        engineRPM = Mathf.Max(0.0f, rearWheelCollider.rpm * gearRatio[currentGear]);
+        if (engineRPM > engineRedline)
         {
-            EngineRPM = Mathf.Max(0.0f, MaxEngineRPM);
+            engineRPM = Mathf.Max(0.0f, maxEngineRPM);
         }
-        ShiftGears();
 
-        ApplyLocalPositionToVisuals(coll_frontWheel);
-        ApplyLocalPositionToVisuals(coll_rearWheel);
+        // The RPM are too high shift gear up
+        if (engineRPM >= maxEngineRPM)
+        {
+            currentGear = currentGear + 1;
+            if (currentGear >= gearRatio.Length) currentGear = gearRatio.Length - 1;
+        }
+        // The RPM are too slow shift gear down
+        else if (engineRPM <= minEngineRPM)
+        {
+            currentGear = currentGear - 1;
+            if (currentGear < 0) currentGear = 0;
+        }
 
 
-        //////////////////////// Do meshes matched to Coliders ////////////////////////////////////////////
-        //beauty - rear pendulumn is looking at rear wheel
+        //////////////////////// Visual mesh position ////////////////////////////////////////////
+        //Rear pendulumn is looking at rear wheel
         rearPendulumn.transform.localRotation.SetEulerAngles(
-            0 - 8 + (meshRearWheel.transform.localPosition.y * 100),
+            0 - 8 + (rearWheelMesh.transform.localPosition.y * 100),
             rearPendulumn.transform.localRotation.eulerAngles.y,
             rearPendulumn.transform.localRotation.eulerAngles.z
-            ); 
-            
-
-        //beauty - wheel bar rotating by front wheel
-        suspensionFront_down.transform.localPosition = new Vector3(
-            suspensionFront_down.transform.localPosition.x, 
-            meshFrontWheel.transform.localPosition.y - 0.15f,
-            suspensionFront_down.transform.localPosition.z
             );
 
-        meshFrontWheel.transform.localPosition = new Vector3(
-            meshFrontWheel.transform.localPosition.x,
-            meshFrontWheel.transform.localPosition.y,
-            meshFrontWheel.transform.localPosition.z - (suspensionFront_down.transform.localPosition.y + 0.4f) / 5
+
+        // Wheel bar rotating by front wheel
+        suspensionFrontDown.transform.localPosition = new Vector3(
+            suspensionFrontDown.transform.localPosition.x,
+            frontWheelMesh.transform.localPosition.y - 0.15f,
+            suspensionFrontDown.transform.localPosition.z
             );
 
-        //Color Debug
-        if (pro_bike_debug)
+        frontWheelMesh.transform.localPosition = new Vector3(
+            frontWheelMesh.transform.localPosition.x,
+            frontWheelMesh.transform.localPosition.y,
+            frontWheelMesh.transform.localPosition.z - (suspensionFrontDown.transform.localPosition.y + 0.4f) / 5
+            );
+
+
+        // Color Debug
+        if (MAIN_BIKE_DEBUG)
         {
-            meshFrontWheel.GetComponent< Renderer > ().material.color = Color.black;
-            meshRearWheel.GetComponent< Renderer > ().material.color = Color.black;
+            // reset color to black when neither accelerate or break
+            frontWheelMesh.GetComponent<Renderer>().material.color = Color.black;
+            rearWheelMesh.GetComponent<Renderer>().material.color = Color.black;
         }
 
 
-        // drag and angular drag for emulate air resistance
-        GetComponent< Rigidbody > ().drag = GetComponent< Rigidbody > ().velocity.magnitude / 210 * airResistance; // when 250 bike can easy beat 200km/h // ~55 m/s
-        GetComponent< Rigidbody > ().angularDrag = 7 + GetComponent< Rigidbody > ().velocity.magnitude / 20;
+        // Air resistance via a drag and angular drag 
+        GetComponent<Rigidbody>().drag = GetComponent<Rigidbody>().velocity.magnitude / 210 * airResistance;
+        GetComponent<Rigidbody>().angularDrag = 7 + GetComponent<Rigidbody>().velocity.magnitude / 20;
 
 
         //determinate the bike speed in km/h
-        bikeSpeed = Mathf.Round((GetComponent< Rigidbody > ().velocity.magnitude * 3.6f) * 10) * 0.1f; //from m/s to km/h
+        bikeSpeed = Mathf.Round((GetComponent<Rigidbody>().velocity.magnitude * 3.6f) * 10) * 0.1f; //from m/s to km/h
+
 
         /////////////////////////// ACCELERATE ///////////////////////////////////////////////////////////
-        //forward case
+        //Forward case
 
-
-
-        if (outsideControls.vertical > 0 && !isReverseOn)
+        if (outsideControls.vertical > 0 && !isRearGearEngaged)
         {
-            //we need that to fix strange unity bug when bike stucks if you press "accelerate" just after "brake".
-            coll_frontWheel.brakeTorque = 0;
-            coll_rearWheel.brakeTorque = 0;
-            coll_rearWheel.motorTorque = EngineTorque * outsideControls.vertical;
+            // Deal with accelerate and brake (we cannot do both).
+            // Set the motor torque using the vertical outside control
+            frontWheelCollider.brakeTorque = 0;
+            rearWheelCollider.brakeTorque = 0;
+            rearWheelCollider.motorTorque = engineTorque * outsideControls.vertical;
 
 
             // debug - rear wheel is green when accelerate
-            if (pro_bike_debug)
+            if (MAIN_BIKE_DEBUG)
             {
-                meshRearWheel.GetComponent< Renderer > ().material.color = Color.green;
+                rearWheelMesh.GetComponent<Renderer>().material.color = Color.green;
             }
-            // when normal accelerating CoM z is averaged
-            CoM.localPosition = new Vector3(CoM.localPosition.x, normalCoM, 0.0f + tmpMassShift);
-            
-            GetComponent< Rigidbody > ().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+
+            CoM.localPosition = new Vector3(CoM.localPosition.x, normalCoM, 0.0f);
+            GetComponent<Rigidbody>().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
 
         }
-        //reverse case
-        else if (outsideControls.vertical > 0 && isReverseOn)
+        //Backward case
+        else if (outsideControls.vertical > 0 && isRearGearEngaged)
         {
-            coll_frontWheel.brakeTorque = 0;
-            coll_rearWheel.brakeTorque = 0;
-            //need to make reverse really slow
-            coll_rearWheel.motorTorque = Mathf.Min(EngineTorque * -outsideControls.vertical / 10 + (bikeSpeed * 50), 0.0f);
-            // debug - rear wheel is green when accelerate
-            if (pro_bike_debug)
+            // Deal with accelerate and brake (we cannot do both).
+            // Set the motor torque using the vertical outside control
+            frontWheelCollider.brakeTorque = 0;
+            rearWheelCollider.brakeTorque = 0;
+            // Need to go backward really slow
+            rearWheelCollider.motorTorque = Mathf.Min(engineTorque * -outsideControls.vertical / 10 + (bikeSpeed * 50), 0.0f);
+            // Debug - rear wheel is green when accelerate
+            if (MAIN_BIKE_DEBUG)
             {
-                meshRearWheel.GetComponent< Renderer > ().material.color = Color.white;
+                rearWheelMesh.GetComponent<Renderer>().material.color = Color.white;
             }
 
 
-            // when normal accelerating CoM z is averaged
-            CoM.localPosition = new Vector3(CoM.localPosition.x, normalCoM, 0.0f + tmpMassShift);
-            GetComponent< Rigidbody > ().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+            CoM.localPosition = new Vector3(CoM.localPosition.x, normalCoM, 0.0f);
+            GetComponent<Rigidbody>().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
         }
         else
         {
-            // slow down when non accelerate 
-            //progressively reduce torque
-            coll_rearWheel.motorTorque = Mathf.Max(0, coll_rearWheel.motorTorque - 0.01f * airResistance);
+            // Slow down when non accelerate 
+            // Progressively reduce torque
+            rearWheelCollider.motorTorque = Mathf.Max(0, rearWheelCollider.motorTorque - 0.01f * airResistance);
         }
 
-        RearSuspensionRestoration();
+
 
         //////////////////////////////////// BRAKING /////////////////////////////////////////////////////
+
+        // If breaking
         if (outsideControls.vertical < 0)
         {
-
             //Front part
             {
-                coll_frontWheel.brakeTorque = frontBrakePower * -outsideControls.vertical;
-                coll_rearWheel.motorTorque = 0; // you can't do accelerate and braking same time.
+                // Deal with accelerate and brake (we cannot do both).
+                // Set the break torque using the vertical outside control
+                frontWheelCollider.brakeTorque = frontBrakePower * -outsideControls.vertical;
+                rearWheelCollider.motorTorque = 0;
 
-                //more user firendly gomeotric progession braking. But less stoppie and fun :( Boring...
-                //coll_frontWheel.brakeTorque = frontBrakePower * -outsideControls.vertical-(1 - -outsideControls.vertical)*-outsideControls.vertical;
-                GetComponent< Rigidbody > ().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
-                // debug - wheel is red when braking
-                if (pro_bike_debug)
+                GetComponent<Rigidbody>().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+                // Debug - wheel is red when braking
+                if (MAIN_BIKE_DEBUG)
                 {
-                    meshFrontWheel.GetComponent< Renderer > ().material.color = Color.red;
+                    frontWheelMesh.GetComponent<Renderer>().material.color = Color.red;
                 }
             }
             //Rear part which is not so good as front brake
             {
-                coll_rearWheel.brakeTorque = frontBrakePower / 2;
+                rearWheelCollider.brakeTorque = frontBrakePower / 2;
 
                 if (this.transform.localEulerAngles.x > 180 && this.transform.localEulerAngles.x < 350)
                 {
-                    CoM.localPosition = new Vector3(CoM.localPosition.x, CoM.localPosition.y, 0.0f + tmpMassShift);
+                    CoM.localPosition = new Vector3(CoM.localPosition.x, CoM.localPosition.y, 0.0f);
                 }
 
-                WheelFrictionCurve sFriction = coll_frontWheel.sidewaysFriction;
-                sFriction.stiffness = ((stiffPowerGain / 2) - tmpMassShift * 3);
-                coll_frontWheel.sidewaysFriction = sFriction;
-
-                stiffPowerGain = stiffPowerGain += 0.025f - (bikeSpeed / 10000);
-                if (stiffPowerGain > 0.9f - bikeSpeed / 300)
-                { //orig 0.90
-                    stiffPowerGain = 0.9f - bikeSpeed / 300;
-                }
-
-                sFriction = coll_rearWheel.sidewaysFriction;
-                sFriction.stiffness = 1.0f - stiffPowerGain;
-                coll_rearWheel.sidewaysFriction = sFriction;
             }
 
+            // Update the friction values (useful i.e for skiding) 
+            WheelFrictionCurve sFriction = frontWheelCollider.sidewaysFriction;
+            sFriction.stiffness = ((stiffPowerGain / 2));
+            frontWheelCollider.sidewaysFriction = sFriction;
+
+            sFriction = rearWheelCollider.sidewaysFriction;
+            sFriction.stiffness = 1.0f - stiffPowerGain;
+            rearWheelCollider.sidewaysFriction = sFriction;
+
+            // Update the power stiff value
+            stiffPowerGain += 0.025f - (bikeSpeed / 10000);
+
+            // Top the value to 0.9*speed/300
+            if (stiffPowerGain > 0.9f - bikeSpeed / 300)
+            {
+                stiffPowerGain = 0.9f - bikeSpeed / 300;
+            }
         }
+        // If not breaking
         else
         {
-
+            // if not accelerating eiter
             if (outsideControls.vertical == 0)
             {
-                coll_rearWheel.brakeTorque = Mathf.Max(0, coll_rearWheel.brakeTorque + airResistance);
-                //print(coll_rearWheel.brakeTorque);
+                // augment the front break a litle bit to help the bike stopping when noting is down
+                // simulate the inertia 
+                frontWheelCollider.brakeTorque = Mathf.Max(0, frontWheelCollider.brakeTorque + airResistance);
             }
 
 
-            // Front part reset
+            // Reset the breaking parameters
+            stiffPowerGain = stiffPowerGain -= 0.05f;
+            if (stiffPowerGain < 0)
             {
-                FrontSuspensionRestoration();
+                stiffPowerGain = 0;
             }
 
-            //Rear part reset 
-            {
-                
-                stiffPowerGain = stiffPowerGain -= 0.05f;
-                if (stiffPowerGain < 0)
-                {
-                    stiffPowerGain = 0;
-                }
+            WheelFrictionCurve sFriction = rearWheelCollider.sidewaysFriction;
+            sFriction.stiffness = 1.0f - stiffPowerGain;
+            rearWheelCollider.sidewaysFriction = sFriction;
 
-                WheelFrictionCurve sFriction = coll_rearWheel.sidewaysFriction;
-                sFriction.stiffness = 1.0f - stiffPowerGain;// side stiffness is back to 2
-                coll_rearWheel.sidewaysFriction = sFriction;
-
-                sFriction = coll_frontWheel.sidewaysFriction;
-                sFriction.stiffness = 1.0f - stiffPowerGain;// side stiffness is back to 1
-                coll_frontWheel.sidewaysFriction = sFriction;
-                
-            }
+            sFriction = frontWheelCollider.sidewaysFriction;
+            sFriction.stiffness = 1.0f - stiffPowerGain;
+            frontWheelCollider.sidewaysFriction = sFriction;
+            
         }
 
 
-        //////////////////////////////////// REVERSE /////////////////////////////////////////////////////////	
-        if (outsideControls.reverse && bikeSpeed <= 0 && !isReverseOn)
+        //////////////////////////////////// BACKWARD /////////////////////////////////////////////////////////	
+        // Engage the rear gear only if the bike is stopped
+        if (outsideControls.reverse && bikeSpeed <= 0 && !isRearGearEngaged)
         {
-            isReverseOn = true;
+            isRearGearEngaged = true;
         }
-        else if (!outsideControls.reverse && bikeSpeed >= 0 && isReverseOn)
+        else if (!outsideControls.reverse && bikeSpeed >= 0 && isRearGearEngaged)
         {
-            isReverseOn = false;
+            isRearGearEngaged = false;
         }
 
         //////////////////////////////////// TURNING ///////////////////////////////////////////////////////			
-        // the Unity physics isn't like real life. Wheel collider isn't round as real bike tyre.
-        // so, face it - you can't reach accurate and physics correct countersteering effect on wheelCollider
-        // For that and many other reasons we restrict front wheel turn angle when when speed is growing
-
-        //associate speed with curve which you've tuned in Editor
+        // Evaluate curve for current speed which will restric turning angle according to speed
+        // This allow to simulate a better phisic
         tempMaxWheelAngle = wheelbarRestrictCurve.Evaluate(bikeSpeed);
         if (outsideControls.horizontal != 0)
         {
-            coll_frontWheel.steerAngle = tempMaxWheelAngle * outsideControls.horizontal;
-            steeringWheel.rotation = coll_frontWheel.transform.rotation * Quaternion.Euler(0, coll_frontWheel.steerAngle, coll_frontWheel.transform.rotation.z);
+            frontWheelCollider.steerAngle = tempMaxWheelAngle * outsideControls.horizontal;
+            steeringWheel.rotation = frontWheelCollider.transform.rotation * Quaternion.Euler(0, frontWheelCollider.steerAngle, frontWheelCollider.transform.rotation.z);
         }
         else
         {
-            coll_frontWheel.steerAngle = 0;
+            frontWheelCollider.steerAngle = 0;
         }
 
-        //TODO Make inclinasion correct
-
-
+        
         ////////////////////////////////// RESTART KEY ////////////////////////////////////////////////////////
-        // Restart key - recreate bike few meters above current place
-
+        // Restart the game from initial location
         if (outsideControls.fullRestartBike)
         {
 
-            this.transform.position = initialPosition;
-            this.transform.rotation = initialRotation;
+            transform.position = initialPosition;
+            transform.rotation = initialRotation;
 
-            //transform.position+=Vector3(0,0.1f,0);
             transform.rotation = Quaternion.Euler(0.0f, transform.localEulerAngles.y, 0.0f);
-            GetComponent< Rigidbody > ().velocity = Vector3.zero;
-            GetComponent< Rigidbody > ().angularVelocity = Vector3.zero;
-            CoM.localPosition = new Vector3(0.0f, normalCoM, 0.0f); 
-                
-            coll_frontWheel.motorTorque = 0;
-            coll_frontWheel.brakeTorque = 0;
-            coll_rearWheel.motorTorque = 0;
-            coll_rearWheel.brakeTorque = 0;
-            GetComponent< Rigidbody > ().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
+            GetComponent<Rigidbody>().velocity = Vector3.zero;
+            GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+            CoM.localPosition = new Vector3(0.0f, normalCoM, 0.0f);
+
+            frontWheelCollider.motorTorque = 0;
+            frontWheelCollider.brakeTorque = 0;
+            rearWheelCollider.motorTorque = 0;
+            rearWheelCollider.brakeTorque = 0;
+            GetComponent<Rigidbody>().centerOfMass = new Vector3(CoM.localPosition.x, CoM.localPosition.y, CoM.localPosition.z);
             outsideControls.fullRestartBike = false;
-        }
-    }
-
-
-    ///////////////////////////////////////////// FUNCTIONS /////////////////////////////////////////////////////////
-    void ShiftGears()
-    {
-
-
-        if (EngineRPM >= MaxEngineRPM)
-        {
-
-            int AppropriateGear = CurrentGear;
-
-            for (int i = 0; i < GearRatio.Length; i++)
-            {
-                if (coll_rearWheel.rpm * GearRatio[i] < MaxEngineRPM)
-                {
-                    AppropriateGear = i;
-                    break;
-                }
-            }
-            CurrentGear = AppropriateGear;
-        }
-
-        if (EngineRPM <= MinEngineRPM)
-        {
-
-            int AppropriateGear = CurrentGear;
-
-            for (int j = GearRatio.Length - 1; j >= 0; j--)
-            {
-                if (coll_rearWheel.rpm * GearRatio[j] > MinEngineRPM)
-                {
-                    AppropriateGear = j;
-                    break;
-                }
-            }
-
-            CurrentGear = AppropriateGear;
-        }
-    }
-
-    void ApplyLocalPositionToVisuals(WheelCollider collider)
-    {
-        if (collider.transform.childCount == 0)
-        {
-            return;
-        }
-
-        Transform visualWheel = collider.transform.GetChild(0);
-        wheelCCenter = collider.transform.TransformPoint(collider.center);
-
-        if (Physics.Raycast(wheelCCenter, -collider.transform.up, hit.distance, (int) (collider.suspensionDistance + collider.radius)))
-        {
-            visualWheel.transform.position = hit.point + (collider.transform.up * collider.radius);
-
-        }
-        else
-        {
-            visualWheel.transform.position = wheelCCenter - (collider.transform.up * collider.suspensionDistance);
-        }
-        Vector3 position;
-        Quaternion rotation;
-        collider.GetWorldPose(out position, out rotation);
-
-
-        visualWheel.localEulerAngles = new Vector3(visualWheel.localEulerAngles.x, collider.steerAngle - visualWheel.localEulerAngles.z, visualWheel.localEulerAngles.z);
-        visualWheel.Rotate(collider.rpm / 60 * 360 * Time.deltaTime, 0, 0);
-
-    }
-
-    //need to restore spring power for rear suspension after make it harder for wheelie
-    void RearSuspensionRestoration()
-    {
-        if (coll_rearWheel.suspensionSpring.spring > normalRearSuspSpring)
-        {
-
-            JointSpring spring = coll_rearWheel.suspensionSpring;
-            spring.spring = coll_rearWheel.suspensionSpring.spring - 500;
-            coll_rearWheel.suspensionSpring = spring;
-        }
-    }
-    //need to restore spring power for front suspension after make it weaker for stoppie
-    void FrontSuspensionRestoration()
-    {
-        if (coll_frontWheel.suspensionSpring.spring < normalFrontSuspSpring)
-        {
-            JointSpring spring = coll_frontWheel.suspensionSpring;
-            spring.spring = coll_frontWheel.suspensionSpring.spring + 500;
-            coll_frontWheel.suspensionSpring = spring;
         }
     }
 }

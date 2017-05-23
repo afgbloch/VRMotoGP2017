@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 // this script contains all control variables needed to control the game.
 // so, it's just a holder for all control variables and some useful command method
@@ -52,6 +51,8 @@ public class ControlHub : MonoBehaviour  {
     // Indicate if the menu is open or not
     public bool menuOn = false;
 
+    // Use this for control initialization
+    // Simply put the game in pause mode
     void Start()
     {
        pause(); 
