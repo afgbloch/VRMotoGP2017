@@ -121,7 +121,7 @@ public class LeapControls : MonoBehaviour
     // apply leap motion tracking effect on the game
     void gameGesture(ref Hands hands, ref Frame frame)
     {
-        float speed = hands.left.GrabStrength / 10.0f;
+        float speed = -hands.left.GrabStrength / 10.0f;
 
         if (!init && hands.right.GrabStrength == 1)
         {
